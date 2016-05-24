@@ -9,6 +9,7 @@ import jinja2
 import logging
 from os import getcwd, path
 from werkzeug.exceptions import default_exceptions, HTTPException
+from sqlalchemy.orm import class_mapper, ColumnProperty
 
 
 ########################################
@@ -16,7 +17,9 @@ from werkzeug.exceptions import default_exceptions, HTTPException
 class Barrel(Blueprint):
 
     def __init__(self, app):
-        Blueprint.__init__(self, __name__, __name__, template_folder='templates')
+        Blueprint.__init__(self, __name__, __name__,
+            template_folder='templates',
+            static_folder='templates')
         app.register_blueprint(self)
         self.app = app
         app.config.from_object('cfg')
@@ -60,6 +63,7 @@ class Barrel(Blueprint):
 
         app.db = SQLAlchemy(app)
         db = app.db
+
         db.echo = app.config['DEBUG']
 
         class BaseModel(db.Model):
@@ -74,6 +78,15 @@ class Barrel(Blueprint):
             def create(self):
                 db.session.add(self)
                 self.persist()
+
+            def delete(self):
+                db.session.delete(self)
+                self.persist()
+
+            def columns(self):
+                """Return the actual columns of a SQLAlchemy-mapped object"""
+                return [prop.key for prop in class_mapper(self.__class__).iterate_properties
+                        if isinstance(prop, ColumnProperty)]
 
         db.BaseModel = BaseModel
 
@@ -118,18 +131,14 @@ class Barrel(Blueprint):
 
     ########################################
 
+    _default_methods = 'GET PUT DELETE'.split(' ')
     def enable_rest(self, models):
         app = self.app
         app.logger.info('Enabling REST API')
         app.api = restless.APIManager(app, flask_sqlalchemy_db=app.db)
-        for model, methods in models:
-            app.logger.info('   %s' % str(model))
-            self.add_rest_model(model, methods)
+        for model in models:
+            self.app.api.create_api(model, methods=self._default_methods)
         return app.api
-
-    def add_rest_model(self, model, methods):
-        methods = methods.split()
-        self.app.api.create_api(model, methods=methods)
 
     # def handle_command(cmd):
     #     if cmd == 'all':
@@ -178,7 +187,7 @@ class Barrel(Blueprint):
                 return self.email
 
             def add_role(self, role_name):
-                role =  Role.query.filter_by(name=role_name).first()
+                role = Role.query.filter_by(name=role_name).first()
                 self.roles.append(role)
 
         # augly way to set defaults, needed because User and Role are not defined yet
@@ -192,7 +201,7 @@ class Barrel(Blueprint):
 
         return app.security
 
-    def add_user(self, email, password):
+    def add_user(self, email, password, **extra):
         return self.app.security.user_datastore.create_user(email=email, password=su.encrypt_password(password))
 
     ########################################

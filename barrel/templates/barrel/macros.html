@@ -1,0 +1,132 @@
+{% macro datepicker(label, model, type="date") %}
+<div class="input-field">
+    <label for={{ label }}>{{ label }}</label>
+    <input type="{{type}}" id={{ label }} value="{{model}}"/>
+</div>
+{% endmacro %}
+
+{% macro period(label="Periode", date1="2016-05-24", date2="2016-05-24", type="date") %}
+<div class="input-field">
+    <table><tr><td>
+    <label for={{ label }}>{{ label }}</label></td><td>
+    <input type="{{type}}" id="{{label}}_start" value="{{date1}}"/></td><td>
+    &nbsp;tot</td><td>
+    <input type="{{type}}" class={{type}} id="{{label}}_end" value="{{date2}}"/></td><td>
+    </td></tr></table>
+</div>
+{% endmacro %}
+
+{% macro euro(label, model) %}
+<div class="input-field">
+    <i class="prefix">&euro;</i>
+    <label for={{ label }}>{{ label }}</label>
+    <input type="number" id={{ label }} value="{{model}}" step="0.01"/>
+</div>
+{% endmacro %}
+
+{% macro submit(label, color) %}
+<div class="input-field">
+    <button class="btn waves-effect waves-light darken-3 {{color}}" id="submit">{{label}}</button>
+</div>
+{% endmacro %}
+
+{% macro text(label, model) %}
+<div class="input-field">
+    <label for={{ label }}>{{ label }}</label>
+    <input type="text" id={{ label }} value="{{model}}" />
+</div>
+{% endmacro  %}
+
+{% macro textarea(label, model) %}
+<div class="input-field col s12">
+    <label for="{{label}}">{{label}}</label>
+    <textarea id="{{label}}" class="materialize-textarea"></textarea>
+</div>
+{% endmacro %}
+
+{% macro footer(text) %}
+<footer class="page-footer {{ basecolor }}">
+  <div class="footer-copyright">
+    <div class="container">
+    {% block footer %}&copy; 2016 steets@otech.nl{% endblock footer %}
+    <a class="grey-text text-lighten-4 right" href={{ url_for('admin.index') }}>OTech.nl</a>
+    </div>
+  </div>
+</footer>
+{% endmacro %}
+
+{% macro messages() %}
+{%- with messages = get_flashed_messages(with_categories=true) -%}
+  {% if messages %}
+    <ul class="flashes">
+    {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{%- endwith %}
+{% endmacro %}
+
+{% macro navigation(commands) %}
+<nav class="{{ basecolor }} lighten-1" role="navigation">
+    <div class="nav-wrapper container">
+        <a id="logo-container" href={{ url_for("index") }} class="brand-logo right"><img src={{ url_for('static', filename='img/logo.png') }}/></a>
+        <ul class="hide-on-med-and-down">
+            {% for cmd, label in commands %}
+                <li{% if cmd == active_page %} class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}s</a></li>
+            {% endfor %}
+        </ul>
+        <ul id="nav-mobile" class="side-nav">
+            <li><a href="#">Navbar Link</a></li>
+        </ul>
+        <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+{% endmacro %}
+
+{% macro model_table(model, fields=None, table_args=None) %}
+{%- set fields=fields if fields else model.columns() -%}
+<div class="col l6 m8 s12"><table class="striped" {{table_args | safe}}>
+{%- for field in fields %}
+{%- if not field=='id' and not field.endswith('_id') %}
+<tr>
+<td class="label">{{ field | replace('_', ' ') | capitalize}}</td>
+<td class="input">{{ model[field] if model[field]!=None else "-" }}</td></tr>
+{%- endif %}
+{%- endfor %}
+</table></div>
+{% endmacro %}
+
+{% macro render_field(field, label_visible=true) -%}
+     <div class="form-group {% if field.errors %}has-error{% endif %} {{ kwargs.pop('class_', '') }}">
+        {% if field.type != 'HiddenField' and label_visible %}
+            <label for="{{ field.id }}" class="control-label">{{ field.label }}</label>
+        {% endif %}
+        {{ field(class_='form-control', **kwargs) }}
+        {% if field.errors %}
+            {% for e in field.errors %}
+                <p class="help-block">{{ e }}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+{%- endmacro %}
+
+{% macro render_form(form, action_url='', action_text='Submit', class_='', btn_class='btn btn-default') -%}
+    <form method="POST" action="{{ action_url }}" role="form" class="{{ class_ }}">
+        {{ form.hidden_tag() if form.hidden_tag }}
+        {% if caller %}
+            {{ caller() }}
+        {% else %}
+            {% for f in form %}
+                {% if f.type == 'BooleanField' %}
+                    {{ render_checkbox_field(f) }}
+                {% elif f.type == 'RadioField' %}
+                    {{ render_radio_field(f) }}
+                {% else %}
+                    {{ render_field(f) }}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        <button type="submit" class="{{ btn_class }}">{{ action_text }} </button>
+    </form>
+{%- endmacro %}
