@@ -1,4 +1,5 @@
-from flask import jsonify, Blueprint
+import arrow
+from flask import jsonify, Blueprint, request
 from flask.ext import restless
 from flask.ext.security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -10,7 +11,11 @@ import logging
 from os import getcwd, path
 from werkzeug.exceptions import default_exceptions, HTTPException
 from sqlalchemy.orm import class_mapper, ColumnProperty
+import sqlalchemy_utils as sau
 
+from flask_wtf import Form
+from wtforms_alchemy import model_form_factory
+from wtforms import PasswordField, validators
 
 ########################################
 
@@ -26,11 +31,6 @@ class Barrel(Blueprint):
 
         self.enable_logger()
         app.logger.info('App name: %s' % app.name)
-
-        # app.jinja_loader = jinja2.ChoiceLoader([
-        #     app.jinja_loader,
-        #     jinja2.FileSystemLoader(['barrel/templates']),
-        # ])
 
         if 'SQLALCHEMY_DATABASE_URI' in app.config:
             self.enable_db()
@@ -72,6 +72,31 @@ class Barrel(Blueprint):
 
             id = db.Column(db.Integer, primary_key=True)
 
+            @classmethod
+            def columns(cls):
+                return cls.__table__.columns.keys()
+
+            @classmethod
+            def from_dict(cls, **kwargs):
+                fields = dict()
+                for f in set.intersection(set(cls.columns()), set(kwargs.keys())):
+                    field_type = str(getattr(cls, f).type)
+                    print '   %s: %s (%s)' % (f, kwargs[f][0], field_type)
+                    fields[f] = kwargs[f][0]
+                    if field_type == 'DATE':
+                        fields[f] = arrow.get(fields[f], 'YYYY-MM-DD').date()
+                    elif field_type == 'DATETIME':
+                        fields[f] = arrow.get(fields[f], 'YYYY-MM-DD HH:mm').datetime
+
+                return cls(**fields)
+
+            @classmethod
+            def get_form(cls):
+                class FormClass(app.ModelForm):
+                    class Meta:
+                        model = cls
+                return FormClass
+
             def persist(self):
                 db.session.commit();
 
@@ -83,14 +108,16 @@ class Barrel(Blueprint):
                 db.session.delete(self)
                 self.persist()
 
-            def columns(self):
-                """Return the actual columns of a SQLAlchemy-mapped object"""
-                return [prop.key for prop in class_mapper(self.__class__).iterate_properties
-                        if isinstance(prop, ColumnProperty)]
-
         db.BaseModel = BaseModel
 
         return db
+
+    def init_db(self):
+        self.app.logger.info('Initializing DB')
+        self.app.db.create_all()
+
+    def commit(self):
+        self.app.db.session.commit()
 
     ########################################
 
@@ -131,28 +158,14 @@ class Barrel(Blueprint):
 
     ########################################
 
-    _default_methods = 'GET PUT DELETE'.split(' ')
-    def enable_rest(self, models):
+    default_methods = ['GET', 'PUT', 'POST', 'DELETE']
+    def enable_rest(self, models, default_methods=default_methods):
         app = self.app
         app.logger.info('Enabling REST API')
         app.api = restless.APIManager(app, flask_sqlalchemy_db=app.db)
         for model in models:
-            self.app.api.create_api(model, methods=self._default_methods)
+            self.app.api.create_api(model, methods=default_methods)
         return app.api
-
-    # def handle_command(cmd):
-    #     if cmd == 'all':
-    #         return flask.render_template('filter.html')
-    #     elif cmd == 'new':
-    #         return flask.render_template('form.html')
-    #     else:
-    #         return "Existing: %s" % cmd
-
-    # models = 'person note appointment task'.split(' ')
-    # for model in models:
-    #     app.add_url_rule('/%s/' % model, model, handle_command, defaults={'cmd':'all'})
-    #     app.add_url_rule('/%s/new' % model, model, handle_command, defaults={'cmd':'new'})
-    #     app.add_url_rule('/%s/<cmd>' % model, model, handle_command)
 
     ########################################
 
@@ -171,8 +184,8 @@ class Barrel(Blueprint):
                 return self.description
 
         class User(db.BaseModel, UserMixin):
-            email = db.Column(db.String(255), unique=True)
-            password = db.Column(db.String(255))
+            email = db.Column(db.String(255), unique=True, nullable=False)
+            password = db.Column(db.String(255), nullable=False)
             active = db.Column(db.Boolean())
             confirmed_at = db.Column(db.DateTime())
             last_login_at = db.Column(db.DateTime())
@@ -180,8 +193,10 @@ class Barrel(Blueprint):
             last_login_ip = db.Column(db.String(255))
             current_login_ip = db.Column(db.String(255))
             login_count = db.Column(db.Integer)
-            roles = db.relationship('Role', secondary=roles_users,
-                                    backref=db.backref('users', lazy='dynamic'))
+            roles = db.relationship(
+                'Role',
+                secondary=roles_users,
+                backref=db.backref('users', lazy='dynamic'))
 
             def __repr__(self):
                 return self.email
@@ -190,9 +205,9 @@ class Barrel(Blueprint):
                 role = Role.query.filter_by(name=role_name).first()
                 self.roles.append(role)
 
-        # augly way to set defaults, needed because User and Role are not defined yet
-        if not user_class: user_class = User
-        if not role_class: role_class = Role
+        # ugly way to set defaults, needed because User and Role are not defined yet
+        user_class = user_class or User
+        role_class = role_class or Role
         user_datastore = SQLAlchemyUserDatastore(db, user_class, role_class)
         app.security = Security(app, user_datastore)
         app.security.user_datastore = user_datastore
@@ -201,18 +216,52 @@ class Barrel(Blueprint):
 
         return app.security
 
-    def add_user(self, email, password, **extra):
-        return self.app.security.user_datastore.create_user(email=email, password=su.encrypt_password(password))
+    def add_user(self, email, password, role, **extra):
+        user = self.app.security.user_datastore.create_user(email=email, password=su.encrypt_password(password))
+        user.add_role(role)
+        return user
 
     ########################################
 
-    def init_db(self):
-        self.app.logger.info('Initializing DB')
-        self.app.db.create_all()
+    def enable_forms(self):
 
-    def commit(self):
-        self.app.db.session.commit()
+        self.app.ModelForm = model_form_factory(
+            Form,
+            date_format='%Y-%m-%d',
+            datetime_format='%Y-%m-%d %H:%M')
+
+    @staticmethod
+    def handle_form(modelCls, formCls, **kwargs):
+        form_data = request.form
+        form = formCls(form_data)
+        if form.validate_on_submit():
+            obj = modelCls.from_dict(**form_data)
+            if not obj:
+                print 'ERROR'
+            for x in kwargs:
+                print '   extra: %s' % x
+                setattr(obj, x, kwargs[x])
+            obj.create()
+
+        return form
+
+    @staticmethod
+    def handle_simple_form(modelCls, **kwargs):
+        return Barrel.handle_form(modelCls, modelCls.get_form(), **kwargs)
+
+    def handle_persoon_form(self, modelCls, formCls):
+        form_data = request.form
+        form = formCls(form_data)
+        if form.validate_on_submit():
+            user = self.add_user(
+                email=form_data['user-email'],
+                password=form_data['user-password'],
+                role=modelCls.__name__.lower())
+            persoon = modelCls.from_dict(**form_data)
+            persoon.user = user
+            user.create()
+
+        return form
 
 ########################################
-
 
