@@ -66,7 +66,39 @@ class Barrel(Blueprint):
 
         db.echo = app.config['DEBUG']
 
-        class BaseModel(db.Model):
+        class CRUDMixin(object):
+            @classmethod
+            def create(cls, commit=True, **kwargs):
+                # print '############## create'
+                # for key, value in kwargs.iteritems():
+                #     print '   %s: %s'% (key, value)
+                instance = cls(**kwargs)
+                return instance.save(commit=commit)
+
+            @classmethod
+            def get(cls, id):
+                return cls.query.get(id)
+
+            @classmethod
+            def get_or_404(cls, id):
+                return cls.query.get_or_404(id)
+
+            def update(self, commit=True, **kwargs):
+                for attr, value in kwargs.iteritems():
+                    setattr(self, attr, value)
+                return commit and self.save() or self
+
+            def save(self, commit=True):
+                db.session.add(self)
+                if commit:
+                    db.session.commit()
+                return self
+
+            def delete(self, commit=True):
+                db.session.delete(self)
+                return commit and db.session.commit()
+
+        class BaseModel(db.Model, CRUDMixin):
             ''' used as super model for all other models '''
             __abstract__ = True
 
@@ -77,18 +109,10 @@ class Barrel(Blueprint):
                 return cls.__table__.columns.keys()
 
             @classmethod
-            def from_dict(cls, **kwargs):
-                fields = dict()
-                for f in set.intersection(set(cls.columns()), set(kwargs.keys())):
-                    field_type = str(getattr(cls, f).type)
-                    print '   %s: %s (%s)' % (f, kwargs[f][0], field_type)
-                    fields[f] = kwargs[f][0]
-                    if field_type == 'DATE':
-                        fields[f] = arrow.get(fields[f], 'YYYY-MM-DD').date()
-                    elif field_type == 'DATETIME':
-                        fields[f] = arrow.get(fields[f], 'YYYY-MM-DD HH:mm').datetime
-
-                return cls(**fields)
+            def from_form(cls, form):
+                obj = cls()
+                form.populate_obj(obj)
+                return obj
 
             @classmethod
             def get_form(cls):
@@ -96,17 +120,6 @@ class Barrel(Blueprint):
                     class Meta:
                         model = cls
                 return FormClass
-
-            def persist(self):
-                db.session.commit();
-
-            def create(self):
-                db.session.add(self)
-                self.persist()
-
-            def delete(self):
-                db.session.delete(self)
-                self.persist()
 
         db.BaseModel = BaseModel
 
@@ -231,37 +244,31 @@ class Barrel(Blueprint):
             datetime_format='%Y-%m-%d %H:%M')
 
     @staticmethod
-    def handle_form(modelCls, formCls, **kwargs):
-        form_data = request.form
-        form = formCls(form_data)
+    def handle_form(modelCls, formCls=None, model=None, **kwargs):
+        if not formCls:
+            formCls = modelCls.get_form()
+        form = formCls(request.form, obj=model)
         if form.validate_on_submit():
-            obj = modelCls.from_dict(**form_data)
-            if not obj:
-                print 'ERROR'
-            for x in kwargs:
-                print '   extra: %s' % x
-                setattr(obj, x, kwargs[x])
-            obj.create()
-
+            if model:
+                form.populate_obj(obj=model)
+                model.update(form)
+            else:
+                kwargs.update(form.data)
+                modelCls.create(**kwargs)
+        # else:
+        #     print '!!!!!!!!!!!!!!! not valid: %s' % model
+        #     for field, value in form.data.iteritems():
+        #         print '   %s: %s'% (field, value)
         return form
 
     @staticmethod
-    def handle_simple_form(modelCls, **kwargs):
-        return Barrel.handle_form(modelCls, modelCls.get_form(), **kwargs)
-
-    def handle_persoon_form(self, modelCls, formCls):
-        form_data = request.form
-        form = formCls(form_data)
-        if form.validate_on_submit():
-            user = self.add_user(
-                email=form_data['user-email'],
-                password=form_data['user-password'],
-                role=modelCls.__name__.lower())
-            persoon = modelCls.from_dict(**form_data)
-            persoon.user = user
-            user.create()
-
-        return form
+    def breadcrums(obj):
+        breadcrums = []
+        parent = obj.parent()
+        if parent:
+            breadcrums = Barrel.breadcrums(parent)
+        breadcrums.append(dict(route=obj.__class__.__name__.lower(), id=obj.id, name=str(obj)))
+        return breadcrums
 
 ########################################
 
