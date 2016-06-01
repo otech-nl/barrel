@@ -88,10 +88,10 @@
 {%- set fields=fields if fields else model.columns() -%}
 <div class="col l6 m8 s12"><table class="striped" {{table_args | safe}}>
 {%- for field in fields %}
-{%- if not field=='id' and not field.endswith('_id') %}
+{%- if not field=='id' and not field.endswith('_id') and model[field]!=None and model[field]!='' %}
 <tr>
-<td class="label">{{ field | replace('_', ' ') | capitalize}}</td>
-<td class="input">{{ model[field] if model[field]!=None else "-" }}</td></tr>
+<td class="label">{{ field | replace('_', ' ') | capitalize}}:</td>
+<td class="input">{{ model[field] }}</td></tr>
 {%- endif %}
 {%- endfor %}
 </table></div>

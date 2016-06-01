@@ -11,6 +11,7 @@ import logging
 from os import getcwd, path
 from werkzeug.exceptions import default_exceptions, HTTPException
 from sqlalchemy.orm import class_mapper, ColumnProperty
+from sqlalchemy.ext.hybrid import hybrid_property
 import sqlalchemy_utils as sau
 
 from flask_wtf import Form
@@ -69,9 +70,6 @@ class Barrel(Blueprint):
         class CRUDMixin(object):
             @classmethod
             def create(cls, commit=True, **kwargs):
-                # print '############## create'
-                # for key, value in kwargs.iteritems():
-                #     print '   %s: %s'% (key, value)
                 instance = cls(**kwargs)
                 return instance.save(commit=commit)
 
@@ -121,6 +119,8 @@ class Barrel(Blueprint):
                         model = cls
                 return FormClass
 
+            def to_dict(self):
+                return {c.name: getattr(self, c.name) for c in self.__table__.columns}
         db.BaseModel = BaseModel
 
         return db
@@ -172,13 +172,18 @@ class Barrel(Blueprint):
     ########################################
 
     default_methods = ['GET', 'PUT', 'POST', 'DELETE']
-    def enable_rest(self, models, default_methods=default_methods):
+    def enable_rest(self, models=[], default_methods=default_methods, **kwargs):
         app = self.app
         app.logger.info('Enabling REST API')
-        app.api = restless.APIManager(app, flask_sqlalchemy_db=app.db)
+        app.api = restless.APIManager(app, flask_sqlalchemy_db=app.db, **kwargs)
         for model in models:
             self.app.api.create_api(model, methods=default_methods)
         return app.api
+
+    @staticmethod
+    def return_json(payload):
+        result = dict(objects=payload)
+        return jsonify(result)
 
     ########################################
 
@@ -198,7 +203,7 @@ class Barrel(Blueprint):
 
         class User(db.BaseModel, UserMixin):
             email = db.Column(db.String(255), unique=True, nullable=False)
-            password = db.Column(db.String(255), nullable=False)
+            _password = db.Column(db.String(255), nullable=False)
             active = db.Column(db.Boolean())
             confirmed_at = db.Column(db.DateTime())
             last_login_at = db.Column(db.DateTime())
@@ -210,6 +215,14 @@ class Barrel(Blueprint):
                 'Role',
                 secondary=roles_users,
                 backref=db.backref('users', lazy='dynamic'))
+
+            @hybrid_property
+            def password(self):
+                return self._password
+
+            @password.setter
+            def _set_password(self, plaintext):
+                self._password = su.encrypt_password(plaintext)
 
             def __repr__(self):
                 return self.email
@@ -230,7 +243,7 @@ class Barrel(Blueprint):
         return app.security
 
     def add_user(self, email, password, role, **extra):
-        user = self.app.security.user_datastore.create_user(email=email, password=su.encrypt_password(password))
+        user = self.app.security.user_datastore.create_user(email=email, password=password)
         user.add_role(role)
         return user
 
