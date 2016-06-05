@@ -1,0 +1,9 @@
+{% extends "barrel/collection.html" %}
+
+{% block grid %}
+<table class="grids"><tr><td width=50%>
+{{ render_grid(children[0]) }}
+</td><td>
+{{ render_grid(children[1]) }}
+</td></tr></table>
+{% endblock grid %}

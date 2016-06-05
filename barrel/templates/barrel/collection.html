@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% macro render_grid(modelData) -%}
+  {#% include "filters/"+modelData.modelName+".html" %#}
+  <h3>{{modelData.subtitle}}</h3>
+  <div id="grid{{modelData.modelName}}" class="backgrid-container block"></div>
+  {% if modelData.allow_add %}
+  <div class="block">
+  <div style="text-align: right"><button id="new{{modelData.modelName}}"><img src="{{ url_for('static', filename='img/icon_add.png') }}"/></button></div>
+  <div id="new{{modelData.modelName}}"{% if modelData.hide_subform %} style='display: none;'{% endif %}>
+      {% include "forms/"+modelData.modelName+".html" %}
+  </div>
+  </div>
+  {% endif %}
+  <script>
+  $(document).ready( function() {
+    new app.Collection("div#grid{{modelData.modelName}}", {{modelData|tojson}} );
+  })
+  </script>
+{%- endmacro %}
+
+{% block content %}
+  {% if parent %}
+  {% if breadcrums %}
+  <div class="block">
+    {% for crum in breadcrums %}
+    <a href="{{ url_for(crum.route, id=crum.id) }}">{{ crum.name }}</a> &gt;
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% include "forms/"+parent.model_name()+".html" %}
+  {% endif %}
+
+  {% block grid %}
+  {% for child in children %}
+  {{ render_grid(child) }}
+  {% endfor %}
+  {% endblock grid %}
+{% endblock content %}

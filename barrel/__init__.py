@@ -25,7 +25,7 @@ class Barrel(Blueprint):
     def __init__(self, app):
         Blueprint.__init__(self, __name__, __name__,
             template_folder='templates',
-            static_folder='templates')
+            static_folder='static/barrel')
         app.register_blueprint(self)
         self.app = app
         app.config.from_object('cfg')
@@ -121,6 +121,11 @@ class Barrel(Blueprint):
 
             def to_dict(self):
                 return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+            @classmethod
+            def get_api(cls):
+                return cls.__name__.lower()
+
         db.BaseModel = BaseModel
 
         return db
