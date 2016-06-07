@@ -96,7 +96,7 @@ app.Collection = function(element, modelData) {
       cell: Backgrid.Cell.extend({
         className: "statusbar-cell",
         render: function () {
-          values = this.model.get('get_status');
+          var values = _.pairs(this.model.get('get_status'));
           var sum = values.reduce(function(prev, curr) {
             return prev + curr[1];
           }, 0);
@@ -146,6 +146,9 @@ app.Collection = function(element, modelData) {
     }
     if(!_.has(column,"cell")) {
       column.cell = "string";
+    }
+    if(!_.has(column,"editable")) {
+      column.editable = false;
     }
     if(column.cell === 'select') {
       if(typeof column.options[0] === 'string'){

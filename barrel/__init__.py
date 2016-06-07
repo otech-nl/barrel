@@ -1,7 +1,7 @@
 import arrow
 from flask import jsonify, Blueprint, request
 from flask.ext import restless
-from flask.ext.security import Security, SQLAlchemyUserDatastore, UserMixin, RoleMixin, login_required
+from flask.ext.security import Security, SQLAlchemyUserDatastore, UserMixin
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
@@ -12,6 +12,7 @@ from os import getcwd, path
 from werkzeug.exceptions import default_exceptions, HTTPException
 from sqlalchemy.orm import class_mapper, ColumnProperty
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.declarative import declared_attr
 import sqlalchemy_utils as sau
 
 from flask_wtf import Form
@@ -69,7 +70,19 @@ class Barrel(Blueprint):
 
         class CRUDMixin(object):
             @classmethod
+            def __clean_kwargs(cls, kwargs):
+                cols = cls.__dict__
+                rem = []
+                print cols
+                for k in kwargs:
+                    if not k in cols and not '_%s'%k in cols and not '%s_id'%k in cols:
+                        rem.append(k)
+                for r in rem:
+                    del kwargs[r]
+
+            @classmethod
             def create(cls, commit=True, **kwargs):
+                cls.__clean_kwargs(kwargs)
                 instance = cls(**kwargs)
                 return instance.save(commit=commit)
 
@@ -82,6 +95,7 @@ class Barrel(Blueprint):
                 return cls.query.get_or_404(id)
 
             def update(self, commit=True, **kwargs):
+                self.__clean_kwargs(kwargs)
                 for attr, value in kwargs.iteritems():
                     setattr(self, attr, value)
                 return commit and self.save() or self
@@ -192,21 +206,12 @@ class Barrel(Blueprint):
 
     ########################################
 
-    def enable_security(self, user_class=None, role_class=None):
-        app = self.app
-        db = app.db
-        roles_users = db.Table('roles_users',
-                db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
-
-        class Role(db.BaseModel, RoleMixin):
-            name = db.Column(db.String(80), unique=True)
-            description = db.Column(db.String(255))
-
-            def __repr__(self):
-                return self.description
+    def bootstrap_security(self):
+        db = self.app.db
 
         class User(db.BaseModel, UserMixin):
+            __abstract__ = True
+
             email = db.Column(db.String(255), unique=True, nullable=False)
             _password = db.Column(db.String(255), nullable=False)
             active = db.Column(db.Boolean())
@@ -216,10 +221,6 @@ class Barrel(Blueprint):
             last_login_ip = db.Column(db.String(255))
             current_login_ip = db.Column(db.String(255))
             login_count = db.Column(db.Integer)
-            roles = db.relationship(
-                'Role',
-                secondary=roles_users,
-                backref=db.backref('users', lazy='dynamic'))
 
             @hybrid_property
             def password(self):
@@ -232,18 +233,14 @@ class Barrel(Blueprint):
             def __repr__(self):
                 return self.email
 
-            def add_role(self, role_name):
-                role = Role.query.filter_by(name=role_name).first()
-                self.roles.append(role)
+        db.User = User
 
-        # ugly way to set defaults, needed because User and Role are not defined yet
-        user_class = user_class or User
-        role_class = role_class or Role
-        user_datastore = SQLAlchemyUserDatastore(db, user_class, role_class)
+    def enable_security(self, user_class, role_class):
+        app = self.app
+
+        user_datastore = SQLAlchemyUserDatastore(app.db, user_class, role_class)
         app.security = Security(app, user_datastore)
         app.security.user_datastore = user_datastore
-        app.security.Role = Role
-        app.security.User = User
 
         return app.security
 
@@ -262,21 +259,18 @@ class Barrel(Blueprint):
             datetime_format='%Y-%m-%d %H:%M')
 
     @staticmethod
-    def handle_form(modelCls, formCls=None, model=None, **kwargs):
-        if not formCls:
-            formCls = modelCls.get_form()
-        form = formCls(request.form, obj=model)
+    def handle_form(model_class, form_class=None, model=None, **kwargs):
+        if not form_class:
+            form_class = model_class.get_form()
+        form = form_class(request.form, obj=model)
         if form.validate_on_submit():
             if model:
                 form.populate_obj(obj=model)
                 model.update(form)
             else:
                 kwargs.update(form.data)
-                modelCls.create(**kwargs)
-        # else:
-        #     print '!!!!!!!!!!!!!!! not valid: %s' % model
-        #     for field, value in form.data.iteritems():
-        #         print '   %s: %s'% (field, value)
+                model_class.create(**kwargs)
+
         return form
 
     @staticmethod
