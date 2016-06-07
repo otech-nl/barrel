@@ -1,5 +1,5 @@
 import arrow
-from flask import jsonify, Blueprint, request
+from flask import jsonify, Blueprint, request, flash
 from flask.ext import restless
 from flask.ext.security import Security, SQLAlchemyUserDatastore, UserMixin
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -73,7 +73,6 @@ class Barrel(Blueprint):
             def __clean_kwargs(cls, kwargs):
                 cols = cls.__dict__
                 rem = []
-                print cols
                 for k in kwargs:
                     if not k in cols and not '_%s'%k in cols and not '%s_id'%k in cols:
                         rem.append(k)
@@ -139,6 +138,10 @@ class Barrel(Blueprint):
             @classmethod
             def get_api(cls):
                 return cls.__name__.lower()
+
+            @classmethod
+            def get_max_id(cls):
+                return db.session.query(db.func.max(cls.id)).scalar()
 
         db.BaseModel = BaseModel
 
@@ -214,13 +217,13 @@ class Barrel(Blueprint):
 
             email = db.Column(db.String(255), unique=True, nullable=False)
             _password = db.Column(db.String(255), nullable=False)
-            active = db.Column(db.Boolean())
+            active = db.Column(db.Boolean(), default=True)
             confirmed_at = db.Column(db.DateTime())
             last_login_at = db.Column(db.DateTime())
             current_login_at = db.Column(db.DateTime())
             last_login_ip = db.Column(db.String(255))
             current_login_ip = db.Column(db.String(255))
-            login_count = db.Column(db.Integer)
+            login_count = db.Column(db.Integer, default=0)
 
             @hybrid_property
             def password(self):
@@ -260,17 +263,16 @@ class Barrel(Blueprint):
 
     @staticmethod
     def handle_form(model_class, form_class=None, model=None, **kwargs):
-        if not form_class:
-            form_class = model_class.get_form()
+        form_class = form_class or model_class.get_form()
         form = form_class(request.form, obj=model)
         if form.validate_on_submit():
+            kwargs.update(form.data)
             if model:
-                form.populate_obj(obj=model)
-                model.update(form)
+                model.update(**kwargs)
+                flash('Gegevens opgeslagen')
             else:
-                kwargs.update(form.data)
                 model_class.create(**kwargs)
-
+                flash('Nieuwe gegevens opgeslagen')
         return form
 
     @staticmethod
