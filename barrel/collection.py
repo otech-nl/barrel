@@ -65,7 +65,7 @@ def render(parent, children, template='barrel/collection.html', allow_add=True, 
         kwargs[child.form_name()] = child.handle_form(parent)
         children_data.append(dict(
             modelName=child.model_name(),
-            api='/api/%s' % child.api_name(),
+            api=child.api_name(),
             subtitle=child.title,
             columns=child.columns,
             filters=child.filters,

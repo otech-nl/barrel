@@ -58,19 +58,21 @@ app.Collection = function(element, modelData) {
     parse: function(response) {
       return response.objects;
     },
-    url: modelData.api
+    url: '/api/'+modelData.api
   });
 
   this.load_grid = function() {
-    // if we are filtering by name, use 'like'
-    var naam = $('#filter #naam').val();
-    if(naam) {
-      modelData.filters.push({name: 'achternaam', op: 'like', val: '%'+naam+'%'} );
+    var filters = []
+    modelData.filters.forEach(function(element) {
+      filters.push(element);
+    })
+    if(_.has(app, 'filters')) {
+      filters = filters.concat(app.filter());
     }
 
     // if we have filters, format them properly
-    if(modelData.filters && modelData.filters.length > 0)
-      modelData.filters = 'q='+JSON.stringify({filters: modelData.filters});
+    if(filters && filters.length > 0)
+      filters = 'q='+JSON.stringify({filters: filters});
 
     this.collection = new Collection();
     var grid = new Backgrid.Grid({
@@ -82,7 +84,7 @@ app.Collection = function(element, modelData) {
     $(element).html(result);
 
     // console.log(filters)
-    this.collection.fetch({reset: true, data: modelData.filters});
+    this.collection.fetch({reset: true, data: filters});
   }
 
   function format_statusbar() {
@@ -166,6 +168,7 @@ app.Collection = function(element, modelData) {
     } else if(column.cell === "statusbar") {
         column = format_statusbar();
     } else if(column.cell === "date") {
+      console.log('DATE');
       column.cell = Backgrid.DateCell.extend({});
     } else if(column.cell === "datetime") {
       column.cell = Backgrid.DatetimeCell.extend({});
@@ -179,8 +182,9 @@ app.Collection = function(element, modelData) {
   });
 
   this.load_grid();
+  var collection = this;
 
-  $(element+' button#filter'+modelData.modelName).click(function (event) {
+  $('button#filter').click(function (event) {
     console.log('Filtering');
     collection.load_grid();
   })

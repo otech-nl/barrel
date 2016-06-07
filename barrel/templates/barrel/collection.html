@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 {% macro render_grid(modelData) -%}
-  {#% include "filters/"+modelData.modelName+".html" %#}
+  {% include "filters/"+modelData.api+".html" ignore missing %}
   <h3>{{modelData.subtitle}}</h3>
   <div id="grid{{modelData.modelName}}" class="backgrid-container block"></div>
   {% if modelData.allow_add %}
   <div class="block">
   <div style="text-align: right"><button id="new{{modelData.modelName}}"><img src="{{ url_for('static', filename='img/icon_add.png') }}"/></button></div>
   <div id="new{{modelData.modelName}}"{% if modelData.hide_subform %} style='display: none;'{% endif %}>
-      {% include "forms/"+modelData.modelName+".html" %}
+      {% include "forms/"+modelData.api+".html" %}
   </div>
   </div>
   {% endif %}
@@ -28,7 +28,7 @@
     {% endfor %}
   </div>
   {% endif %}
-  {% include "forms/"+parent.model_name()+".html" %}
+  {% include "forms/"+parent.api_name()+".html" %}
   {% endif %}
 
   {% block grid %}
