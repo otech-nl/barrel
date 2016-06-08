@@ -13,11 +13,12 @@
 </head>
 <body>
     {% block first %}
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     {% endblock first %}
     {% block messages %} {{ messages() }} {% endblock messages %}
     {%- block body %}EMPTY BODY{% endblock body -%}
     {%- block scripts %} {# mainly for CDN scripts #}
+    <script src="{{url_for('barrel.static', filename='js/utils.js')}}"></script>
     {% endblock scripts -%}
     {% for script in scripts -%} {# for local scripts #}
     <script src="{{ url_for("static", filename="js/"+script+".js") }}"></script>

@@ -62,12 +62,9 @@ app.Collection = function(element, modelData) {
   });
 
   this.load_grid = function() {
-    var filters = []
-    modelData.filters.forEach(function(element) {
-      filters.push(element);
-    })
-    if(_.has(app, 'filters')) {
-      filters = filters.concat(app.filter());
+    var filters = modelData.filters;
+    if(_.has($.fn, 'apply_filter')) {
+      filters = filters.concat($.fn.apply_filter());
     }
 
     // if we have filters, format them properly
@@ -168,7 +165,6 @@ app.Collection = function(element, modelData) {
     } else if(column.cell === "statusbar") {
         column = format_statusbar();
     } else if(column.cell === "date") {
-      console.log('DATE');
       column.cell = Backgrid.DateCell.extend({});
     } else if(column.cell === "datetime") {
       column.cell = Backgrid.DatetimeCell.extend({});
@@ -185,7 +181,6 @@ app.Collection = function(element, modelData) {
   var collection = this;
 
   $('button#filter').click(function (event) {
-    console.log('Filtering');
     collection.load_grid();
   })
 
@@ -200,13 +195,9 @@ app.Collection = function(element, modelData) {
   })
 
   $('div.backgrid-container').on('click', 'a.delete', function(event){
-    console.log('DELETE');
     if(!confirm('Weet u het zeker? (Dit item en alle gerelateerde items worden definitief verwijderd!)')) {
-      console.log('   CANCEL');
       event.preventDefault();
       event.stopPropagation();
-    } else {
-      console.log('   GO');
     }
   })
 }

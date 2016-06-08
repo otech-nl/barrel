@@ -1,8 +1,8 @@
 import arrow
 from flask import jsonify, Blueprint, request, flash
-from flask.ext import restless
-from flask.ext.security import Security, SQLAlchemyUserDatastore, UserMixin
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_restless import APIManager
+from flask_security import Security, SQLAlchemyUserDatastore, UserMixin
+from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_security import utils as su
@@ -11,6 +11,7 @@ import logging
 from os import getcwd, path
 from werkzeug.exceptions import default_exceptions, HTTPException
 from sqlalchemy.orm import class_mapper, ColumnProperty
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declared_attr
 import sqlalchemy_utils as sau
@@ -42,7 +43,7 @@ class Barrel(Blueprint):
     def enable_logger(self):
         app = self.app
         if app.config['LOGGER_NAME'] == app.name:
-            app.config['LOGGER_NAME'] = '%s.log' % app.name
+            app.config['LOGGER_NAME'] = './%s.log' % app.name
         log = path.join(getcwd(), app.config['LOGGER_NAME'])
         file_handler = logging.FileHandler(log)
         file_handler.setFormatter(logging.Formatter(
@@ -96,6 +97,7 @@ class Barrel(Blueprint):
             def update(self, commit=True, **kwargs):
                 self.__clean_kwargs(kwargs)
                 for attr, value in kwargs.iteritems():
+                    # print '+++++++ %s: %s' % (attr, value)
                     setattr(self, attr, value)
                 return commit and self.save() or self
 
@@ -137,7 +139,7 @@ class Barrel(Blueprint):
 
             @classmethod
             def get_api(cls):
-                return cls.__name__.lower()
+                return cls.__tablename__
 
             @classmethod
             def get_max_id(cls):
@@ -197,7 +199,7 @@ class Barrel(Blueprint):
     def enable_rest(self, models=[], default_methods=default_methods, **kwargs):
         app = self.app
         app.logger.info('Enabling REST API')
-        app.api = restless.APIManager(app, flask_sqlalchemy_db=app.db, **kwargs)
+        app.api = APIManager(app, flask_sqlalchemy_db=app.db, **kwargs)
         for model in models:
             self.app.api.create_api(model, methods=default_methods)
         return app.api
@@ -258,8 +260,8 @@ class Barrel(Blueprint):
 
         self.app.ModelForm = model_form_factory(
             Form,
-            date_format='%Y-%m-%d',
-            datetime_format='%Y-%m-%d %H:%M')
+            date_format='%d-%m-%Y',
+            datetime_format='%d-%m-%Y %H:%M')
 
     @staticmethod
     def handle_form(model_class, form_class=None, model=None, **kwargs):
@@ -267,12 +269,19 @@ class Barrel(Blueprint):
         form = form_class(request.form, obj=model)
         if form.validate_on_submit():
             kwargs.update(form.data)
-            if model:
-                model.update(**kwargs)
-                flash('Gegevens opgeslagen')
-            else:
-                model_class.create(**kwargs)
-                flash('Nieuwe gegevens opgeslagen')
+            try:
+                if model:
+                    model.update(**kwargs)
+                    flash('Gegevens opgeslagen', 'success')
+                else:
+                    model_class.create(**kwargs)
+                    flash('Nieuwe gegevens opgeslagen', 'success')
+            except IntegrityError, e:
+                flash(e.message, 'error')
+        else:
+            if request.method == 'POST':
+                flash('Gegevens onjuist', 'error')
+                flash(str(form.errors), 'error')
         return form
 
     @staticmethod

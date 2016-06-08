@@ -5,15 +5,20 @@
 </div>
 {% endmacro %}
 
-{% macro period(label="Periode", date1="2016-05-24", date2="2016-05-24", type="date") %}
+{% macro period(label1="Periode", label2="tot", type="date") %}
 <div class="input-field">
     <table><tr><td>
-    <label for={{ label }}>{{ label }}</label></td><td>
-    <input type="{{type}}" id="{{label}}_start" value="{{date1}}"/></td><td>
+    <label for={{ label1 }}>{{ label1 }}</label></td><td>
+    <input type="{{type}}" id="{{label1}}"/></td><td>
     &nbsp;tot</td><td>
-    <input type="{{type}}" class={{type}} id="{{label}}_end" value="{{date2}}"/></td><td>
+    <input type="{{type}}" class={{type}} id="{{label2}}"/></td><td>
     </td></tr></table>
 </div>
+<script>
+$(document).ready(function() {
+    handle_period($('input#{{label1}}'), $('input#{{label2}}'));
+})
+</script>
 {% endmacro %}
 
 {% macro euro(label, model) %}
@@ -85,7 +90,7 @@
 {% endmacro %}
 
 {% macro model_table(model, fields=None, table_args=None) %}
-{%- set fields=fields if fields else model.columns() -%}
+{%- set fields=fields or model.columns() -%}
 <div class="col l6 m8 s12"><table class="striped" {{table_args | safe}}>
 {%- for field in fields %}
 {%- if not field=='id' and not field.endswith('_id') and model[field]!=None and model[field]!='' %}
