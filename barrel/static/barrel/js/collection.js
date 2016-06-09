@@ -2,7 +2,7 @@ var app = app || {};
 
 String.prototype.ucfirst = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
-}
+};
 
 app.Collection = function(element, modelData) {
   // copy row to form when clicked
@@ -40,14 +40,15 @@ app.Collection = function(element, modelData) {
         console.log("Saving");
         result = model.save(null, {
           error: function(model, response, options) {
-            if(response.status == 404 || response.status == 405)
+            if(response.status == 404 || response.status == 405) {
               alert("Fout: "+response.statusText+" ("+response.status+")");
+            }
             else {
               console.log(response.responseText);
               text = JSON.parse(response.responseText);
-              alert("Fout: "+text["message"]);
+              alert("Fout: "+text.message);
             }
-          },
+          }
         });
       }
   });
@@ -68,8 +69,9 @@ app.Collection = function(element, modelData) {
     }
 
     // if we have filters, format them properly
-    if(filters && filters.length > 0)
+    if(filters && filters.length > 0) {
       filters = 'q='+JSON.stringify({filters: filters});
+    }
 
     this.collection = new Collection();
     var grid = new Backgrid.Grid({
@@ -82,12 +84,13 @@ app.Collection = function(element, modelData) {
 
     // console.log(filters)
     this.collection.fetch({reset: true, data: filters});
-  }
+  };
 
   function format_statusbar() {
     function statusbar_cell(size, cls, value) {
-      return '<td width='+size+' class="'+cls+'" align="center">'+value+'</td>'
+      return '<td width='+size+' class="'+cls+'" align="center">'+value+'</td>';
     }
+
     return {
       name: 'statusbar',
       label: 'Status',
@@ -101,10 +104,11 @@ app.Collection = function(element, modelData) {
           }, 0);
           var id = this.model.id;
           var html = values.map(function(value) {
-            if(value[1])
+            if(value[1]) {
               return statusbar_cell(Math.round(100*value[1]/(sum+1))+'%', value[0], value[1]);
-            else
+            } else {
               return '';
+            }
           });
           html.push(statusbar_cell(20, 'sum', sum));
           html = '<table width=200><tr>'+html.join('')+'</tr></table>';
@@ -159,7 +163,7 @@ app.Collection = function(element, modelData) {
       column.cell = Backgrid.SelectCell.extend({
         optionValues: column.options
       });
-    };
+    }
     if(column.cell === "toolbar") {
       column = format_toolbar(column.tools);
     } else if(column.cell === "statusbar") {
@@ -170,7 +174,7 @@ app.Collection = function(element, modelData) {
       column.cell = Backgrid.DatetimeCell.extend({});
     } else if(column.cell === "boolean") {
       column.cell = Backgrid.BooleanCell.extend({});
-    };
+    }
     if(!_.has(column,"label")) {
       column.label = column.name.split('_').join(' ').ucfirst();
     }
@@ -182,22 +186,22 @@ app.Collection = function(element, modelData) {
 
   $('button#filter').click(function (event) {
     collection.load_grid();
-  })
+  });
 
   $('button#new'+modelData.modelName).click(function (event) {
     $('button#new'+modelData.modelName).hide();
     $('div#new'+modelData.modelName).show();
-  })
+  });
 
   $('button#cancel'+modelData.modelName.toLowerCase()).click(function (event) {
     $('button#new'+modelData.modelName).show();
     $('div#new'+modelData.modelName).hide();
-  })
+  });
 
-  $('div.backgrid-container').on('click', 'a.delete', function(event){
+  $('div.backgrid-container').on('click', 'a.delete', function(event) {
     if(!confirm('Weet u het zeker? (Dit item en alle gerelateerde items worden definitief verwijderd!)')) {
       event.preventDefault();
       event.stopPropagation();
     }
-  })
-}
+  });
+};

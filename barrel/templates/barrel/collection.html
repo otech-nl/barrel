@@ -29,6 +29,11 @@
   </div>
   {% endif %}
   {% include "forms/"+parent.api_name()+".html" %}
+  <script>
+    $("button#cancel{{parent.api_name()}}").click(function() {
+      window.history.back();
+    })
+  </script>
   {% endif %}
 
   {% block grid %}

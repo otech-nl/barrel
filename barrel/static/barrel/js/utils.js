@@ -56,6 +56,7 @@ $(document).ready(function () {
         // mask: true,
         defaultTime: now,
         defaultDate: now,
+        dayOfWeekStart: 1,
         weeks: true,
     }
     $('[type=datetime]').attr('type','text').datetimepicker(options);

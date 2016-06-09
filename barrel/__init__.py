@@ -11,7 +11,7 @@ import logging
 from os import getcwd, path
 from werkzeug.exceptions import default_exceptions, HTTPException
 from sqlalchemy.orm import class_mapper, ColumnProperty
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declared_attr
 import sqlalchemy_utils as sau
@@ -34,6 +34,10 @@ class Barrel(Blueprint):
 
         self.enable_logger()
         app.logger.info('App name: %s' % app.name)
+
+        # if 'DEBUG' in app.config and app.config['DEBUG']:
+        #     from flask_debugtoolbar import DebugToolbarExtension
+        #     DebugToolbarExtension(app)
 
         if 'SQLALCHEMY_DATABASE_URI' in app.config:
             self.enable_db()
@@ -82,9 +86,13 @@ class Barrel(Blueprint):
 
             @classmethod
             def create(cls, commit=True, **kwargs):
+                print 'CREATE %s' % cls
                 cls.__clean_kwargs(kwargs)
+                print '   %s' % kwargs
                 instance = cls(**kwargs)
-                return instance.save(commit=commit)
+                obj = instance.save(commit=commit)
+                obj.after_create()
+                return obj
 
             @classmethod
             def get(cls, id):
@@ -96,8 +104,9 @@ class Barrel(Blueprint):
 
             def update(self, commit=True, **kwargs):
                 self.__clean_kwargs(kwargs)
+                # print 'UPDATE %s' % cls
+                # print '   %s' % kwargs
                 for attr, value in kwargs.iteritems():
-                    # print '+++++++ %s: %s' % (attr, value)
                     setattr(self, attr, value)
                 return commit and self.save() or self
 
@@ -110,6 +119,9 @@ class Barrel(Blueprint):
             def delete(self, commit=True):
                 db.session.delete(self)
                 return commit and db.session.commit()
+
+            def after_create(self):
+                pass
 
         class BaseModel(db.Model, CRUDMixin):
             ''' used as super model for all other models '''
@@ -276,12 +288,13 @@ class Barrel(Blueprint):
                 else:
                     model_class.create(**kwargs)
                     flash('Nieuwe gegevens opgeslagen', 'success')
-            except IntegrityError, e:
-                flash(e.message, 'error')
+            except SQLAlchemyError, e:
+                flash('%s\n(See log for details)' % e.message, 'error')
+                print str(e)
         else:
             if request.method == 'POST':
                 flash('Gegevens onjuist', 'error')
-                flash(str(form.errors), 'error')
+                flash('DEBUG: %s' % form.errors, 'error')
         return form
 
     @staticmethod
