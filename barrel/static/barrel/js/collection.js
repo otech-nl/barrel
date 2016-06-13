@@ -83,7 +83,14 @@ app.Collection = function(element, modelData) {
     $(element).html(result);
 
     // console.log(filters)
-    this.collection.fetch({reset: true, data: filters});
+    this.collection.fetch({
+      reset: true,
+      data: filters,
+      error: function(collection, response, options) {
+        $('body').html(response.responseText);
+      }
+
+    });
   };
 
   function format_statusbar() {

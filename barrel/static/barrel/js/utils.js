@@ -4,9 +4,13 @@ String.prototype.ucfirst = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
-function parse_DMY(text) {
-  text = text.split('-');
-  return new Date(text[1]+'-'+text[0]+'-'+text[2]);
+function parse_DMY(text, dflt) {
+    if(text) {
+        text = text.split('-');
+        return new Date(text[1]+'-'+text[0]+'-'+text[2]);
+    } else {
+        return dflt;
+    }
 }
 
 function handle_period(start_element, end_element) {
