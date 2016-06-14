@@ -54,8 +54,10 @@ class ChildData(__CollectionModel):
 ########################################
 
 def render(parent, children, template='barrel/collection.html', allow_add=True, **kwargs):
+    title = ''
     if parent:
         kwargs[parent.form_name()] = parent.handle_form()
+        title = parent.title
 
     if not type(children) is list:
         children = [children]
@@ -80,6 +82,7 @@ def render(parent, children, template='barrel/collection.html', allow_add=True, 
 
     return render_template(
         template,
+        title=title,
         breadcrums=breadcrums,
         parent=parent,
         children=children_data,

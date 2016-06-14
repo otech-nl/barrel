@@ -3,7 +3,7 @@
 {% macro render_grid(modelData) -%}
   {% include "filters/"+modelData.api+".html" ignore missing %}
   <h3>{{modelData.subtitle}}</h3>
-  <div id="grid{{modelData.modelName}}" class="backgrid-container block"></div>
+  <div id="grid{{modelData.modelName}}" class="block"></div>
   {% if modelData.allow_add %}
   <div class="block">
   <div style="text-align: right"><button id="new{{modelData.modelName}}"><img src="{{ url_for('static', filename='img/icon_add.png') }}"/></button></div>

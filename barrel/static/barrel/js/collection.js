@@ -54,12 +54,43 @@ app.Collection = function(element, modelData) {
   });
 
   // a collection that connects to REST
-  var Collection = Backbone.Collection.extend({
+  var Collection = Backbone.PageableCollection.extend({
     model: Model,
-    parse: function(response) {
+    parseRecords: function(response) {
       return response.objects;
     },
-    url: '/api/'+modelData.api
+    url: '/api/'+modelData.api,
+    state: {
+      pageSize: 7,
+      sortKey: 'id'
+    },
+    queryParams: {
+      totalRecords: null,
+      totalPages: null,
+      sortKey: null,
+      order: null,
+      currentPage: "page",
+      sortKey: "sort",
+      order: "order",
+      pageSize: null,
+      q: function () {
+        if(this.state.sortKey) {
+          $.extend(this.filters, {
+            order_by: [{
+              field: this.state.sortKey,
+              direction: this.state.order == -1 ? "asc" : "desc"
+            }]
+          });
+        }
+        return JSON.stringify(this.filters);
+      }
+    },
+
+    parseState: function (resp, queryParams, state, options) {
+        return {
+          totalRecords: resp.num_results,
+        };
+    }
   });
 
   this.load_grid = function() {
@@ -68,24 +99,31 @@ app.Collection = function(element, modelData) {
       filters = filters.concat($.fn.apply_filter());
     }
 
-    // if we have filters, format them properly
-    if(filters && filters.length > 0) {
-      filters = 'q='+JSON.stringify({filters: filters});
-    }
-
     this.collection = new Collection();
     var grid = new Backgrid.Grid({
       columns: modelData.columns,
       collection: this.collection,
       row: ClickableRow
     });
-    result = grid.render().el;
-    $(element).html(result);
+    // if we have filters, format them properly
+    if(filters && filters.length > 0) {
+      this.collection.filters = {filters: filters};
+    } else {
+      this.collection.filters = {}
+    }
 
-    // console.log(filters)
     this.collection.fetch({
       reset: true,
-      data: filters,
+      success: function(collection, response, options) {
+        var result = grid.render().el;
+        $(element).html(result);
+        if(collection.state.totalPages > 1) {
+          var paginator = new Backgrid.Extension.Paginator({
+            collection: collection
+          });
+          $(element).append(paginator.render().el);
+        }
+      },
       error: function(collection, response, options) {
         $('body').html(response.responseText);
       }
@@ -176,9 +214,17 @@ app.Collection = function(element, modelData) {
     } else if(column.cell === "statusbar") {
         column = format_statusbar();
     } else if(column.cell === "date") {
-      column.cell = Backgrid.DateCell.extend({});
+      column.formatter = _.extend({}, Backgrid.CellFormatter.prototype, {
+        fromRaw: function (rawValue, model) {
+          return new Date(rawValue).pretty_print();
+        }
+      })
     } else if(column.cell === "datetime") {
-      column.cell = Backgrid.DatetimeCell.extend({});
+      column.formatter = _.extend({}, Backgrid.CellFormatter.prototype, {
+        fromRaw: function (rawValue, model) {
+          return new Date(rawValue).pretty_print(true);
+        }
+      })
     } else if(column.cell === "boolean") {
       column.cell = Backgrid.BooleanCell.extend({});
     }
