@@ -98,13 +98,6 @@ app.Collection = function(element, modelData) {
     if(_.has($.fn, 'apply_filter')) {
       filters = filters.concat($.fn.apply_filter());
     }
-
-    this.collection = new Collection();
-    var grid = new Backgrid.Grid({
-      columns: modelData.columns,
-      collection: this.collection,
-      row: ClickableRow
-    });
     // if we have filters, format them properly
     if(filters && filters.length > 0) {
       this.collection.filters = {filters: filters};
@@ -234,6 +227,13 @@ app.Collection = function(element, modelData) {
     return column;
   });
 
+
+  this.collection = new Collection();
+  var grid = new Backgrid.Grid({
+    columns: modelData.columns,
+    collection: this.collection,
+    row: ClickableRow
+  });
   this.load_grid();
   var collection = this;
 

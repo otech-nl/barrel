@@ -13,6 +13,20 @@ function parse_DMY(text, dflt) {
     }
 }
 
+Date.prototype.pretty_print = function(full) {
+   var yyyy = this.getFullYear().toString();
+   var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+   var dd  = this.getDate().toString();
+   var result = yyyy +'-'+ (mm[1]?mm:"0"+mm[0]) +'-'+ (dd[1]?dd:"0"+dd[0]);
+
+   if(full) {
+       var h  = this.getHours().toString();
+       var m  = this.getMinutes().toString();
+       result += ' '+ (h[1]?h:"0"+h[0]) +':'+ (m[1]?m:"0"+m[0]); // padding
+    }
+    return result;
+  };
+
 function handle_period(start_element, end_element) {
     var today = new Date();
 

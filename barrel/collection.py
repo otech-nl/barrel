@@ -1,5 +1,5 @@
 from flask import render_template, request
-from barrel import Barrel
+import forms
 
 ########################################
 
@@ -29,7 +29,7 @@ class ParentData(__CollectionModel):
 
     def handle_form(self):
         if self.api_name() in request.form:
-            return Barrel.handle_form(self.model_class, self.form_class, model=self.model)
+            return forms.handle_form(self.model_class, self.form_class, model=self.model)
         else:
             return self.form_class(None, obj=self.model)
 
@@ -47,7 +47,7 @@ class ChildData(__CollectionModel):
             kwargs = dict()
             if parent:
                 kwargs[parent.api_name()] = parent.model
-            return Barrel.handle_form(self.model_class, self.form_class, **kwargs)
+            return forms.handle_form(self.model_class, self.form_class, **kwargs)
         else:
             return self.form_class()
 
