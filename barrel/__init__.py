@@ -4,6 +4,7 @@ import admin
 import db
 import forms
 import logger
+import mail
 import rest
 import security
 

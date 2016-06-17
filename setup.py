@@ -27,7 +27,12 @@ setup(name='flask_barrel',
       license='CC BY-NC-ND',
       packages=['barrel'],
       install_requires=[
-          'flask-admin', 'flask-restless', 'flask-security', 'flask-sqlalchemy', 'flask-debugtoolbar'
+          'flask-admin',
+          'flask-debugtoolbar',
+          'flask-restless',
+          'flask-mail',
+          'flask-security',
+          'flask-sqlalchemy',
       ],
       # test_suite='nose.collector',
       # tests_require=['nose', 'nose-cover3'],

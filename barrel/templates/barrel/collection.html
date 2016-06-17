@@ -42,3 +42,8 @@
   {% endfor %}
   {% endblock grid %}
 {% endblock content %}
+
+{%- block scripts %}
+{{ super() }}
+<script src="{{url_for('barrel.static', filename='js/collection.js')}}"></script>
+{% endblock scripts -%}

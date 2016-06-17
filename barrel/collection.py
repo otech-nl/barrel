@@ -76,7 +76,7 @@ def render(parent, children, template='barrel/collection.html', allow_add=True, 
         ))
 
     try:
-        breadcrums = Barrel.breadcrums(parent.model.parent())
+        breadcrums = forms.breadcrums(parent.model.parent())
     except Exception, e:
         breadcrums = None
 

@@ -16,7 +16,7 @@ def enable(app):
         @classmethod
         def __clean_kwargs(cls, kwargs):
             cols = cls.__dict__
-            rem = []
+            rem = []    # columns to be removed
             for k in kwargs:
                 if not k in cols and not '_%s'%k in cols and not '%s_id'%k in cols:
                     rem.append(k)
@@ -25,11 +25,12 @@ def enable(app):
 
         @classmethod
         def create(cls, commit=True, **kwargs):
-            print 'CREATE %s' % cls
+            # print 'CREATE %s' % cls
             cls.__clean_kwargs(kwargs)
-            print '   %s' % kwargs
-            instance = cls(**kwargs)
-            obj = instance.save(commit=commit)
+            # print '   %s' % kwargs
+            obj = cls(**kwargs)
+            db.session.add(obj)
+            if commit: obj.save()
             obj.after_create()
             return obj
 
@@ -43,16 +44,16 @@ def enable(app):
 
         def update(self, commit=True, **kwargs):
             self.__clean_kwargs(kwargs)
-            print 'UPDATE %s' % self
+            # print 'UPDATE %s' % self
             # print '   %s' % kwargs
             for attr, value in kwargs.iteritems():
                 setattr(self, attr, value)
-            return commit and self.save() or self
+            if commit: self.save()
+            self.after_update()
+            return self
 
-        def save(self, commit=True):
-            db.session.add(self)
-            if commit:
-                db.session.commit()
+        def save(self):
+            db.session.commit()
             return self
 
         def delete(self, commit=True):
@@ -61,6 +62,10 @@ def enable(app):
 
         def after_create(self):
             pass
+
+        def after_update(self):
+            pass
+
     db.CRUDMixin = CRUDMixin
 
     class BaseModel(db.Model):

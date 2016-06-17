@@ -1,4 +1,4 @@
-from flask_security import Security, SQLAlchemyUserDatastore, UserMixin
+from flask_security import Security, SQLAlchemyUserDatastore, UserMixin, utils
 from sqlalchemy.ext.hybrid import hybrid_property
 
 ########################################
@@ -25,7 +25,7 @@ def bootstrap(app):
 
         @password.setter
         def _set_password(self, plaintext):
-            self._password = su.encrypt_password(plaintext)
+            self._password = utils.encrypt_password(plaintext)
 
         def __repr__(self):
             return self.email

@@ -1,3 +1,4 @@
+import flask
 from flask_restless import APIManager
 
 default_methods = ['GET', 'PUT', 'POST', 'DELETE']
@@ -37,8 +38,7 @@ def enable(app, models=[], default_methods=default_methods, **kwargs):
 
 # ########################################
 
-# @staticmethod
-# def return_json(payload):
-#     result = dict(objects=payload)
-#     return jsonify(result)
+def jsonify(payload):
+    result = dict(objects=payload)
+    return flask.jsonify(result)
 

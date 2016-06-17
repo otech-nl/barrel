@@ -96,7 +96,13 @@ $(document).ready(function() {
 {%- if not field=='id' and not field.endswith('_id') and model[field]!=None and model[field]!='' %}
 <tr>
 <td class="label">{{ field | replace('_', ' ') | capitalize}}:</td>
-<td class="input">{{ model[field] }}</td></tr>
+<td class="input">
+{% if not model[field] is string and model[field] is iterable %}
+{{ model[field] | join(', ')}}
+{% else %}
+{{ model[field] | safe }}
+{% endif %}
+</td></tr>
 {%- endif %}
 {%- endfor %}
 </table></div>

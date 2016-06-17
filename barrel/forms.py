@@ -1,4 +1,6 @@
+from flask import request, flash
 from flask_wtf import Form
+from sqlalchemy.exc import SQLAlchemyError
 from wtforms_alchemy import model_form_factory
 
 ########################################
@@ -34,7 +36,7 @@ def handle_form(model_class, form_class=None, model=None, **kwargs):
                 model_class.create(**kwargs)
                 flash('Nieuwe gegevens opgeslagen', 'success')
         except SQLAlchemyError, e:
-            flash('%s\n(See log for details)' % e.message, 'error')
+            flash('%s (See log for details)' % e.message, 'error')
             print str(e)
     else:
         if request.method == 'POST':
@@ -46,12 +48,12 @@ def handle_form(model_class, form_class=None, model=None, **kwargs):
 ########################################
 
 def breadcrums(obj):
-    breadcrums = []
+    bc = []
     parent = obj.parent()
     if parent:
-        breadcrums = Barrel.breadcrums(parent)
-    breadcrums.append(dict(route=obj.__class__.__name__.lower(), id=obj.id, name=str(obj)))
-    return breadcrums
+        bc = breadcrums(parent)
+    bc.append(dict(route=obj.__class__.__name__.lower(), id=obj.id, name=str(obj)))
+    return bc
 
 ########################################
 

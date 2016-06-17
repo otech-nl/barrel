@@ -6,4 +6,8 @@
 </td><td>
 {{ render_grid(children[1]) }}
 </td></tr></table>
+{% for child in children[2:] %}
+{{ render_grid(child) }}
+{% endfor %}
+
 {% endblock grid %}

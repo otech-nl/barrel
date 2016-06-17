@@ -133,6 +133,7 @@ app.Collection = function(element, modelData) {
       name: 'statusbar',
       label: 'Status',
       editable: false,
+      sortable: false,
       cell: Backgrid.Cell.extend({
         className: "statusbar-cell",
         render: function () {
@@ -164,6 +165,7 @@ app.Collection = function(element, modelData) {
       name: 'toolbar',
       label: 'Acties',
       editable: false,
+      sortable: false,
       cell: Backgrid.Cell.extend({
         className: "toolbar-cell",
         render: function () {
@@ -184,6 +186,9 @@ app.Collection = function(element, modelData) {
   modelData.columns = modelData.columns.map( function(column, index) {
     if(typeof column === "string") {
       column = {'name': column};
+      if(column.name.match(/^get_/)) {
+        column.sortable = false;
+      }
     }
     if(!_.has(column,"cell")) {
       column.cell = "string";
@@ -222,7 +227,7 @@ app.Collection = function(element, modelData) {
       column.cell = Backgrid.BooleanCell.extend({});
     }
     if(!_.has(column,"label")) {
-      column.label = column.name.split('_').join(' ').ucfirst();
+      column.label = column.name.replace(/^get_/, "").split('_').join(' ').ucfirst();
     }
     return column;
   });
