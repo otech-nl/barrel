@@ -56,7 +56,8 @@ class ChildData(__CollectionModel):
 def render(parent, children, template='barrel/collection.html', allow_add=True, **kwargs):
     title = ''
     if parent:
-        kwargs[parent.form_name()] = parent.handle_form()
+        form = kwargs[parent.form_name()] = parent.handle_form()
+        kwargs[parent.api_name()] = parent.model
         title = parent.title
 
     if not type(children) is list:

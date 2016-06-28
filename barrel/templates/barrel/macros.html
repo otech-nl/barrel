@@ -91,7 +91,7 @@ $(document).ready(function() {
 
 {% macro model_table(model, fields=None, table_args=None) %}
 {%- set fields=fields or model.columns() -%}
-<div class="col l6 m8 s12"><table class="striped" {{table_args | safe}}>
+<table class="striped" {{table_args | safe}}>
 {%- for field in fields %}
 {%- if not field=='id' and not field.endswith('_id') and model[field]!=None and model[field]!='' %}
 <tr>
@@ -105,7 +105,7 @@ $(document).ready(function() {
 </td></tr>
 {%- endif %}
 {%- endfor %}
-</table></div>
+</table>
 {% endmacro %}
 
 {% macro render_field(field, label_visible=true) -%}
@@ -141,3 +141,4 @@ $(document).ready(function() {
         <button type="submit" class="{{ btn_class }}">{{ action_text }} </button>
     </form>
 {%- endmacro %}
+

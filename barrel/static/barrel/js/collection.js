@@ -61,7 +61,7 @@ app.Collection = function(element, modelData) {
     },
     url: '/api/'+modelData.api,
     state: {
-      pageSize: 7,
+      pageSize: 10,
       sortKey: 'id'
     },
     queryParams: {
@@ -82,7 +82,8 @@ app.Collection = function(element, modelData) {
             }]
           });
         }
-        return JSON.stringify(this.filters);
+        var filters = JSON.stringify(this.filters);
+        return filters;
       }
     },
 
@@ -125,10 +126,6 @@ app.Collection = function(element, modelData) {
   };
 
   function format_statusbar() {
-    function statusbar_cell(size, cls, value) {
-      return '<td width='+size+' class="'+cls+'" align="center">'+value+'</td>';
-    }
-
     return {
       name: 'statusbar',
       label: 'Status',
@@ -137,20 +134,8 @@ app.Collection = function(element, modelData) {
       cell: Backgrid.Cell.extend({
         className: "statusbar-cell",
         render: function () {
-          var values = _.pairs(this.model.get('get_status'));
-          var sum = values.reduce(function(prev, curr) {
-            return prev + curr[1];
-          }, 0);
-          var id = this.model.id;
-          var html = values.map(function(value) {
-            if(value[1]) {
-              return statusbar_cell(Math.round(100*value[1]/(sum+1))+'%', value[0], value[1]);
-            } else {
-              return '';
-            }
-          });
-          html.push(statusbar_cell(20, 'sum', sum));
-          html = '<table width=200><tr>'+html.join('')+'</tr></table>';
+          var values = this.model.get('get_status')
+          var html = formatStatusbar(values);
           this.$el.empty();
           this.$el.html( html );
           this.delegateEvents();
@@ -186,9 +171,6 @@ app.Collection = function(element, modelData) {
   modelData.columns = modelData.columns.map( function(column, index) {
     if(typeof column === "string") {
       column = {'name': column};
-      if(column.name.match(/^get_/)) {
-        column.sortable = false;
-      }
     }
     if(!_.has(column,"cell")) {
       column.cell = "string";
@@ -216,18 +198,23 @@ app.Collection = function(element, modelData) {
         fromRaw: function (rawValue, model) {
           return new Date(rawValue).pretty_print();
         }
-      })
+      });
+      column.sortable = true;
     } else if(column.cell === "datetime") {
       column.formatter = _.extend({}, Backgrid.CellFormatter.prototype, {
         fromRaw: function (rawValue, model) {
           return new Date(rawValue).pretty_print(true);
         }
-      })
+      });
+      column.sortable = true;
     } else if(column.cell === "boolean") {
       column.cell = Backgrid.BooleanCell.extend({});
     }
-    if(!_.has(column,"label")) {
+    if(!("label" in column)) {
       column.label = column.name.replace(/^get_/, "").split('_').join(' ').ucfirst();
+    }
+    if(column.name.match(/^get_/)) {
+      column.sortable = false;
     }
     return column;
   });

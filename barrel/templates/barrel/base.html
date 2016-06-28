@@ -6,10 +6,10 @@
     <title>{{ title }}</title>
     {%- block head %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    {% endblock head -%}
-    {% for link in stylesheets -%}
+    {%- endblock head -%}
+    {%- for link in stylesheets %}
     <link rel="stylesheet" href={{ url_for("static", filename="css/"+link+".css") }}/>
-    {% endfor -%}
+    {%- endfor %}
 </head>
 <body>
     {% block first %}

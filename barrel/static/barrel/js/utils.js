@@ -64,6 +64,27 @@ function handle_period(start_element, end_element) {
     }
 }
 
+function formatStatusbar(values) {
+    var colors = {openstaand: 'firebrick', ingeschreven: 'orange', toegekend: 'green', sum: 'black'};
+    function statusbar_cell(size, cls, value) {
+        return '<td width='+size+' style="background: '+colors[cls]+'; color: white" align="center">'+value+'</td>';
+    }
+
+    var values = _.pairs(values);
+    var sum = values.reduce(function(prev, curr) {
+        return prev + curr[1];
+    }, 0);
+    var html = values.map(function(value) {
+        if(value[1]) {
+          return statusbar_cell(Math.round(100*value[1]/(sum+1))+'%', value[0], value[1]);
+        } else {
+          return '';
+        }
+    });
+    html.push(statusbar_cell(20, 'sum', sum));
+    return '<table style="width: 150pt"><tr>'+html.join('')+'</tr></table>';
+}
+
 $(document).ready(function () {
     var now = new Date();
     var options = {

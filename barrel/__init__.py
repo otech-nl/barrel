@@ -20,6 +20,9 @@ def init(name):
     app.register_blueprint(Barrel(app))
     app.config.from_object('cfg')
 
+    app.jinja_env.trim_blocks = True
+    app.jinja_env.lstrip_blocks = True
+
     logger.enable(app)
     app.logger.info('App name: %s' % app.name)
 

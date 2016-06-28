@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 ########################################
 
@@ -27,7 +28,7 @@ def enable(app):
         def create(cls, commit=True, **kwargs):
             # print 'CREATE %s' % cls
             cls.__clean_kwargs(kwargs)
-            # print '   %s' % kwargs
+            print '   %s' % kwargs
             obj = cls(**kwargs)
             db.session.add(obj)
             if commit: obj.save()
@@ -68,6 +69,53 @@ def enable(app):
 
     db.CRUDMixin = CRUDMixin
 
+    class SoftDeleteMixin(CRUDMixin):
+
+        ############################################
+        # UNTESTED
+        ############################################
+
+        deleted_at = db.Column(db.DateTime, default=None)
+
+        def delete(self, commit=True, undelete=False):
+            print '############## SOFT DELETE'
+            if undelete:
+                self.deleted_at = None
+            else:
+                self.deleted_at = datetime.now()
+            for rel in self.__mapper__.relationships:
+                if 'delete' in rel._cascade:
+                    relation = str(rel).split('.')[1]
+                    relation = getattr(self, relation)
+                    for obj in relation:
+                        if isinstance(obj, SoftDeleteMixin):
+                            obj.delete(commit=False, undelete=undelete)
+                        else:
+                            obj.delete(commit=False)
+
+            return commit and db.session.commit()
+
+        @classmethod
+        def query(cls, *args, **kwargs):
+            print '############## SOFT QUERY'
+            if not args:
+                query = cls._query(cls)
+            else:
+                query = cls._query(*args)
+
+            if "include_deleted" not in kwargs or kwargs["include_deleted"] is False:
+                query = query.filter(cls.deleted_at == None)
+
+            return query
+
+        @classmethod
+        def get(cls, id, include_deleted=False):
+            return cls.query(include_deleted=include_deleted)\
+                      .filter(cls.id == id)\
+                      .first()
+
+    db.SoftDeleteMixin = SoftDeleteMixin
+
     class BaseModel(db.Model):
         ''' used as super model for all other models '''
         __abstract__ = True
@@ -105,4 +153,5 @@ def enable(app):
 
 def init(app):
     app.logger.info('Initializing DB')
+    app.db.drop_all()
     app.db.create_all()
