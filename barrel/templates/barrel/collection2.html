@@ -1,9 +1,9 @@
 {% extends "barrel/collection.html" %}
 
 {% block grid %}
-<table class="grids"><tr><td width=50%>
+<table class="grids"><tr><td width=50% style="vertical-align: top">
 {{ render_grid(children[0]) }}
-</td><td>
+</td><td style="vertical-align: top">
 {{ render_grid(children[1]) }}
 </td></tr></table>
 {% for child in children[2:] %}

@@ -242,11 +242,4 @@ app.Collection = function(element, modelData) {
     $('button#new'+modelData.modelName).show();
     $('div#new'+modelData.modelName).hide();
   });
-
-  $('div.backgrid-container').on('click', 'a.delete', function(event) {
-    if(!confirm('Weet u het zeker? (Dit item en alle gerelateerde items worden definitief verwijderd!)')) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  });
 };

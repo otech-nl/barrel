@@ -26,9 +26,10 @@ def enable(app):
 
         @classmethod
         def create(cls, commit=True, **kwargs):
+            app.logger.report('Creating %s: %s' % (cls.__name__, kwargs))
             # print 'CREATE %s' % cls
             cls.__clean_kwargs(kwargs)
-            print '   %s' % kwargs
+            # print '   %s' % kwargs
             obj = cls(**kwargs)
             db.session.add(obj)
             if commit: obj.save()
@@ -44,6 +45,7 @@ def enable(app):
             return cls.query.get_or_404(id)
 
         def update(self, commit=True, **kwargs):
+            app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__, self, kwargs))
             self.__clean_kwargs(kwargs)
             # print 'UPDATE %s' % self
             # print '   %s' % kwargs
@@ -58,6 +60,7 @@ def enable(app):
             return self
 
         def delete(self, commit=True):
+            app.logger.report('Deleting %s "%s"' % (self.__class__.__name__, self))
             db.session.delete(self)
             return commit and db.session.commit()
 

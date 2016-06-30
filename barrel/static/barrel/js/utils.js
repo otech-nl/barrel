@@ -67,7 +67,11 @@ function handle_period(start_element, end_element) {
 function formatStatusbar(values) {
     var colors = {openstaand: 'firebrick', ingeschreven: 'orange', toegekend: 'green', sum: 'black'};
     function statusbar_cell(size, cls, value) {
-        return '<td width='+size+' style="background: '+colors[cls]+'; color: white" align="center">'+value+'</td>';
+        if(value > 0) {
+            return '<td width='+size+' style="background: '+colors[cls]+'; color: white" align="center">'+value+'</td>';
+        } else {
+            return "";
+        }
     }
 
     var values = _.pairs(values);

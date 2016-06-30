@@ -15,6 +15,13 @@
   <script>
   $(document).ready( function() {
     new app.Collection("div#grid{{modelData.modelName}}", {{modelData|tojson}} );
+
+  $('div#grid{{modelData.modelName}}').on('click', 'a.delete', function(event) {
+    if(!confirm('Weet u het zeker? (Dit item en alle gerelateerde items worden definitief verwijderd!)')) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
   })
   </script>
 {%- endmacro %}
