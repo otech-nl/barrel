@@ -82,6 +82,7 @@ class BarrelCollection(object):
                 allow_add=allow_add,
             ))
 
+        # breadcrums = BarrelForms.breadcrums(parent.model.parent())
         try:
             breadcrums = BarrelForms.breadcrums(parent.model.parent())
         except Exception, e:

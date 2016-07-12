@@ -209,6 +209,23 @@ app.Collection = function(element, modelData) {
       column.sortable = true;
     } else if(column.cell === "boolean") {
       column.cell = Backgrid.BooleanCell.extend({});
+    } else if(column.cell === "rust") {
+      column.cell = Backgrid.Cell.extend({
+        className: "rust-cell",
+        render: function () {
+          var rawValue = this.model.get(this.column.get("name"));
+          this.$el.empty();
+          if(rawValue < 0) {
+            this.$el.addClass("negative");
+          } else if(rawValue < 8) {
+            this.$el.addClass("unsafe");
+          }
+          this.$el.html( rawValue );
+          this.delegateEvents();
+          return this;
+        }
+      });
+      column.sortable = true;
     }
     if(!("label" in column)) {
       column.label = column.name.replace(/^get_/, "").split('_').join(' ').ucfirst();

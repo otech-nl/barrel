@@ -20,10 +20,11 @@ def enable(app):
     app.logger.info('Enabled logger: %s' % log)
 
     def report(msg, level='info', details=''):
+        user = ''
         if current_user and not isinstance(current_user, AnonymousUser):
             user = '[%s] ' % current_user
         if details: details = ' (%s)' % details
-        msg = '%s%s%s' % (user or '', msg, details)
+        msg = '%s%s%s' % (user, msg, details)
         print msg
         if level == 'error':
             app.logger.error(msg)

@@ -54,7 +54,7 @@ class BarrelForms(object):
         bc = []
         parent = obj.parent()
         if parent:
-            bc = breadcrums(parent)
+            bc = BarrelForms.breadcrums(parent)
         bc.append(dict(route=obj.__class__.__name__.lower(), id=obj.id, name=str(obj)))
         return bc
 
