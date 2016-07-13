@@ -20,20 +20,23 @@ class ExcelObject(object):
         key_column = None
         records = []
         for row in sheet.iter_rows():
-            if int(row[0].row) < first_row:
+            row_nr = int(row[0].row)
+            if row_nr < first_row:
                 # print '   ignoring line %d: %s' % (row[0].row, row[0].value)
                 continue
-            if cls.field_names:
-                # print 'RECORD %d' % key_column
-                if row[key_column].value:
-                    record = cls(row)
-                    records.append(record)
-            else:
+            elif row_nr == first_row:
                 # print 'HEADERS'
                 for field in row:
                     if not field.value: break
                     cls.field_names.append(field.value)
                 key_column = cls.field_names.index(cls.key_column)
+                if not key_column:
+                    raise KeyError('Key column %s for %s not found' % (cls.key_column, cls.__name__))
+            else:
+                # print 'RECORD %d: %s' % (key_column, cls.field_names)
+                if row[key_column].value:
+                    record = cls(row)
+                    records.append(record)
         return records
 
     @staticmethod

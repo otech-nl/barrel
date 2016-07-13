@@ -5,12 +5,20 @@ String.prototype.ucfirst = function() {
 }
 
 function parse_DMY(text, dflt) {
+    var date = dflt;
     if(text) {
-        text = text.split('-');
-        return new Date(text[1]+'-'+text[0]+'-'+text[2]);
-    } else {
-        return dflt;
+        if(text.indexOf('-') >= 0) {
+            // Chrome
+            text = text.split('-');
+            date = new Date(text[1]+'-'+text[0]+'-'+text[2]);
+        } else {
+            // IE
+            text = text.split(' ');
+            text = text[0].split('/');
+            date = new Date(text[1]+'-'+text[2]+'-'+text[0]);
+        }
     }
+    return date.toISOString();
 }
 
 Date.prototype.pretty_print = function(full) {

@@ -3,6 +3,8 @@ from flask_security import current_user
 from flask_security.core import AnonymousUser
 from os import getcwd, path
 import logging
+import sys
+import traceback
 
 ########################################
 
@@ -36,6 +38,8 @@ def enable(app):
 
     def flash(msg, level='info', details=''):
         flask.flash(msg, level)
+        if not details:
+            details = ''.join(traceback.format_tb(sys.exc_traceback)) if hasattr(sys, 'exc_traceback') else None
         report(msg, level, details)
     app.logger.flash = flash
 
