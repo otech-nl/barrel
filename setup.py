@@ -33,6 +33,7 @@ setup(name='flask_barrel',
           'flask-mail',
           'flask-security',
           'flask-sqlalchemy',
+          'wtforms-alchemy'
       ],
       # test_suite='nose.collector',
       # tests_require=['nose', 'nose-cover3'],

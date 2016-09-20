@@ -10,6 +10,12 @@ import security
 
 ########################################
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+########################################
+
 def init(name):
     class Barrel(Blueprint):
         def __init__(self, app):

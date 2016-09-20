@@ -5,13 +5,19 @@
 </div>
 {% endmacro %}
 
+{% macro select(label, values) %}
+<label for="{{label}}">{{label | capitalize}}: </label><select name="{{label}}" id="{{label}}">
+{% for v in values %}<option value="{{v}}">{{v}}</option>{% endfor %}
+</select></td></tr><tr><td>
+{% endmacro %}
+
 {% macro period(label1="Periode", label2="tot", type="date") %}
 <div class="input-field">
     <table><tr><td>
     <label for={{ label1 }}>{{ label1 }}</label></td><td>
-    <input type="{{type}}" id="{{label1}}"/></td><td>
-    &nbsp;tot</td><td>
-    <input type="{{type}}" class={{type}} id="{{label2}}"/></td><td>
+    <input type="{{type}}" id="{{label1}}" name="{{label1}}"/></td><td>
+    &nbsp;{{label2}}</td><td>
+    <input type="{{type}}" class={{type}} id="{{label2}}" name="{{label2}}"/></td><td>
     </td></tr></table>
 </div>
 <script>
@@ -60,33 +66,60 @@ $(document).ready(function() {
 </footer>
 {% endmacro %}
 
-{% macro messages() %}
-{%- with messages = get_flashed_messages(with_categories=true) -%}
-  {% if messages %}
+{% macro _raw_messages(messages) %}
     <ul class="flashes">
     {% for category, message in messages %}
       <li class="{{ category }}">{{ message }}</li>
     {% endfor %}
     </ul>
+{% endmacro %}
+
+{% macro _toastr_messages(messages) %}
+    <script>
+    $(document).ready(function(){
+    {%- for category, message in messages %}
+      toastr["{{category}}"]("{{message}}");
+    {%- endfor %}
+    })
+    </script>
+{% endmacro %}
+
+{% macro messages(use_toastr=False) %}
+{%- with messages = get_flashed_messages(with_categories=true) -%}
+  {% if messages %}
+    {% if use_toastr %}
+      {{ _toastr_messages(messages) }}
+    {% else %}
+        {{ _raw_messages(messages) }}
+    {% endif %}
   {% endif %}
 {%- endwith %}
 {% endmacro %}
 
-{% macro navigation(commands) %}
-<nav class="{{ basecolor }} lighten-1" role="navigation">
+{% macro toastr_messages() %}
+{{ messages(True) }}
+{% endmacro %}
+
+{% macro navigation(title, commands) %}
+<div class="navbar-fixed"> <nav role="navigation"> <div class="nav-wrapper">
+    <a href="{{ url_for('index') }}" class="brand-logo">{{title}}</a>
+    <ul id="nav-mobile" class="right hide-on-med-and-down">
+    {% for cmd, label in commands %}
+        <li {% if cmd == active_page %}class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}</a></li>
+    {% endfor %}
+    </ul>
+</div> </nav> </div>
+{# <nav>
     <div class="nav-wrapper container">
         <a id="logo-container" href={{ url_for("index") }} class="brand-logo right"><img src={{ url_for('static', filename='img/logo.png') }}/></a>
         <ul class="hide-on-med-and-down">
-            {% for cmd, label in commands %}
-                <li{% if cmd == active_page %} class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}s</a></li>
-            {% endfor %}
         </ul>
         <ul id="nav-mobile" class="side-nav">
             <li><a href="#">Navbar Link</a></li>
         </ul>
         <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>
-</nav>
+</nav> #}
 {% endmacro %}
 
 {% macro model_table(model, fields=None, table_args=None) %}
@@ -129,7 +162,9 @@ $(document).ready(function() {
             {{ caller() }}
         {% else %}
             {% for f in form %}
-                {% if f.type == 'BooleanField' %}
+                {% if f.type == 'HiddenField' or f.name == 'csrf_token'%}
+                {# do nothing #}
+                {% elif f.type == 'BooleanField' %}
                     {{ render_checkbox_field(f) }}
                 {% elif f.type == 'RadioField' %}
                     {{ render_radio_field(f) }}

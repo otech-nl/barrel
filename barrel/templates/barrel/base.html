@@ -1,27 +1,28 @@
-{% from 'barrel/macros.html' import messages %}
+{% import 'barrel/macros.html' as macro %}
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>{{ title }}</title>
     {%- block head %}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    {%- endblock head -%}
-    {%- for link in stylesheets %}
-    <link rel="stylesheet" href={{ url_for("static", filename="css/"+link+".css") }}/>
-    {%- endfor %}
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+    {% endblock head %}
+    {% for link in stylesheets %}
+    <link rel='stylesheet' href="{{ url_for('static', filename='css/'+link+'.css') }}">
+    {% endfor %}
 </head>
 <body>
     {% block first %}
-    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src='https://code.jquery.com/jquery-2.1.1.min.js'></script>
     {% endblock first %}
-    {% block messages %} {{ messages() }} {% endblock messages %}
+    {% block messages %} {{ macro.messages() }} {% endblock messages %}
+    {%- block navigation %}{% endblock navigation -%}
     {%- block body %}EMPTY BODY{% endblock body -%}
     {%- block scripts %} {# mainly for CDN scripts #}
-    <script src="{{url_for('barrel.static', filename='js/utils.js')}}"></script>
+    <script src='{{url_for('barrel.static', filename='js/utils.js')}}'></script>
     {% endblock scripts -%}
     {% for script in scripts -%} {# for local scripts #}
-    <script src="{{ url_for("static", filename="js/"+script+".js") }}"></script>
+    <script src='{{ url_for('static', filename='js/'+script+'.js') }}'></script>
     {% endfor -%}
     {%- block final %} {# final block, after all others have loaded #} {% endblock final -%}
 </body>

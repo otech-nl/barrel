@@ -1,6 +1,6 @@
 from flask import request
 from flask_wtf import Form
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError
 from wtforms_alchemy import model_form_factory
 
 ########################################
@@ -14,11 +14,15 @@ class BarrelForms(object):
 
     class FormModelMixin(object):
         @classmethod
-        def get_form(cls):
+        def _get_form(cls):
             class FormClass(BarrelForms.ModelForm):
                 class Meta:
                     model = cls
             return FormClass
+
+        @classmethod
+        def get_form(cls):
+            return cls._get_form()
 
     ########################################
 
@@ -40,7 +44,8 @@ class BarrelForms(object):
                     print kwargs
                     model_class.create(**kwargs)
                     self.app.logger.flash('Nieuwe gegevens opgeslagen', 'success')
-            except SQLAlchemyError, e:
+            except SQLAlchemyError as e:
+                self.app.db.session.rollback()
                 self.app.logger.flash('%s (See log for details)' % e.message, 'error', e)
         else:
             if request.method == 'POST':

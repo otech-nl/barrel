@@ -16,7 +16,8 @@ class ExcelObject(object):
     @classmethod
     def sheet2array(cls, sheet, first_row=1):
         ''' derive objects from a worksheet '''
-        # print 'Reading %s records (%s)' % (cls.__name__, sheet)
+        # print 'Reading %s records (%s) from row %d with key column "%s"' % (cls.__name__, sheet, first_row, cls.key_column)
+        cls.field_names = []
         key_column = None
         records = []
         for row in sheet.iter_rows():

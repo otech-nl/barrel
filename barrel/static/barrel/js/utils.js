@@ -4,7 +4,7 @@ String.prototype.ucfirst = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
-function parse_DMY(text, dflt) {
+function parse_DMY2Date(text, dflt) {
     var date = dflt;
     if(text) {
         if(text.indexOf('-') >= 0) {
@@ -18,7 +18,11 @@ function parse_DMY(text, dflt) {
             date = new Date(text[1]+'-'+text[2]+'-'+text[0]);
         }
     }
-    return date.toISOString();
+    return date;
+}
+
+function parse_DMY(text, dflt) {
+    return parse_DMY2Date(text, dflt).toISOString();
 }
 
 Date.prototype.pretty_print = function(full) {
@@ -42,8 +46,8 @@ function handle_period(start_element, end_element) {
         onShow: function(time, $input) {
             var end_val = end_element.val();
             if(end_val) {
-                end_val = parse_DMY(end_val);
-                $input.datetimepicker({
+                end_val = parse_DMY2Date(end_val);
+                start_element.datetimepicker({
                     maxDate: end_val,
                 });
             }
@@ -58,8 +62,8 @@ function handle_period(start_element, end_element) {
         onShow: function(time, $input) {
             var start_val = start_element.val();
             if(start_val) {
-                start_val = parse_DMY(start_val);
-                $input.datetimepicker({
+                start_val = parse_DMY2Date(start_val);
+                end_element.datetimepicker({
                     minDate: start_val
                 });
             }

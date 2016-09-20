@@ -32,7 +32,7 @@ def bootstrap(app):
 
     db.User = User
 
-def enable(app, user_class, role_class):
+def enable(app, user_class, role_class=None):
     app.logger.info('Enabling security')
     user_datastore = SQLAlchemyUserDatastore(app.db, user_class, role_class)
     app.security = Security(app, user_datastore)

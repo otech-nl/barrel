@@ -150,6 +150,10 @@ def enable(app):
         def commit():
             db.session.commit()
 
+        @staticmethod
+        def rollback():
+            db.session.rollback()
+
     db.BaseModel = BaseModel
 
     return db
