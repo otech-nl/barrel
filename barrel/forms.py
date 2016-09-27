@@ -7,22 +7,34 @@ from wtforms_alchemy import model_form_factory
 
 class BarrelForms(object):
 
-    ModelForm = model_form_factory(
+    class ModelForm(model_form_factory(
             Form,
             date_format='%d-%m-%Y',
-            datetime_format='%d-%m-%Y %H:%M')
+            datetime_format='%d-%m-%Y %H:%M')):
+        def __iter__(self):
+            ''' make the 'only' attribute order-sensitive '''
+            field_order = getattr(self, 'only', None)
+            if field_order:
+                temp_fields = []
+                for name in field_order:
+                    if name == '*':
+                        temp_fields.extend([f for f in self._unbound_fields if f[0] not in field_order])
+                    else:
+                        temp_fields.append([f for f in self._unbound_fields if f[0] == name][0])
+                self._unbound_fields = temp_fields
+            return super(Form, self).__iter__()
 
     class FormModelMixin(object):
         @classmethod
-        def _get_form(cls):
+        def get_form(cls):
             class FormClass(BarrelForms.ModelForm):
                 class Meta:
                     model = cls
             return FormClass
 
-        @classmethod
-        def get_form(cls):
-            return cls._get_form()
+        # @classmethod
+        # def get_form(cls):
+        #     return cls._get_form()
 
     ########################################
 

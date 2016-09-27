@@ -100,26 +100,39 @@ $(document).ready(function() {
 {{ messages(True) }}
 {% endmacro %}
 
-{% macro navigation(title, commands) %}
-<div class="navbar-fixed"> <nav role="navigation"> <div class="nav-wrapper">
-    <a href="{{ url_for('index') }}" class="brand-logo">{{title}}</a>
-    <ul id="nav-mobile" class="right hide-on-med-and-down">
+{% macro menu_items(commands, ul_class="nav navbar-nav") %}
+<ul class="{{ul_class}}">
     {% for cmd, label in commands %}
-        <li {% if cmd == active_page %}class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}</a></li>
+        {% if cmd is string %}
+            <li {% if cmd == active_page %}class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}</a></li>
+        {% else %}
+            <li class="dropdown-submenu">
+                <a class="dropdown">{{ label }}<span class="caret"></span></a>
+                {{ menu_items(cmd, 'dropdown-menu')}}
+            </li>
+        {% endif %}
     {% endfor %}
-    </ul>
-</div> </nav> </div>
-{# <nav>
-    <div class="nav-wrapper container">
-        <a id="logo-container" href={{ url_for("index") }} class="brand-logo right"><img src={{ url_for('static', filename='img/logo.png') }}/></a>
-        <ul class="hide-on-med-and-down">
-        </ul>
-        <ul id="nav-mobile" class="side-nav">
-            <li><a href="#">Navbar Link</a></li>
-        </ul>
-        <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+</ul>
+{% endmacro %}
+
+{% macro navigation(title, commands) %}
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="{{ url_for('home')}}">{{title}}</a>
     </div>
-</nav> #}
+    {{ menu_items(commands) }}
+    <p class="navbar-text navbar-right"><a href="{{ url_for('profile')}}" class="navbar-link">{{current_user}}</a></p>  </div>
+</nav>
+<script>
+$(document).ready(function(){
+  $('.dropdown-submenu a.dropdown').on("click", function(e){
+    $(this).next('ul').toggle();
+    e.stopPropagation();
+    e.preventDefault();
+  });
+});
+</script>
 {% endmacro %}
 
 {% macro model_table(model, fields=None, table_args=None) %}
