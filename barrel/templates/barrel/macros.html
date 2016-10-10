@@ -137,7 +137,7 @@ $(document).ready(function(){
 
 {% macro model_table(model, fields=None, table_args=None) %}
 {%- set fields=fields or model.columns() -%}
-<table class="striped" {{table_args | safe}}>
+<table class="table striped-table"{% if table_args %} {{table_args | safe}}{% endif %}>
 {%- for field in fields %}
 {%- if not field=='id' and not field.endswith('_id') and model[field]!=None and model[field]!='' %}
 <tr>
@@ -188,5 +188,10 @@ $(document).ready(function(){
         {% endif %}
         <button type="submit" class="{{ btn_class }}">{{ action_text }} </button>
     </form>
+    <script>
+    $("button#cancel").click(function() {
+    window.history.back();
+    })
+    </script>
 {%- endmacro %}
 

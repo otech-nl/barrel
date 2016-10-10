@@ -29,7 +29,7 @@ setup(name='flask_barrel',
       install_requires=[
           'flask-admin',
           'flask-debugtoolbar',
-          'flask-restless',
+          'flask-restless<1.0.0',
           'flask-mail',
           'flask-security',
           'flask-sqlalchemy',

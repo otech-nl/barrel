@@ -38,8 +38,22 @@ class BarrelForms(object):
 
     ########################################
 
-    def __init__(self, app):
+    def __init__(self, app, messages=None, lang='en'):
         self.app = app
+        self.messages = messages or dict(
+            nl=dict(
+                updated='Gegevens aangepast',
+                created='Nieuwe gegevens opgeslagen',
+                error='%s (zie log voor details)',
+                illegal='Gegevens onjuist'
+            ),
+            en=dict(
+                updated='Data updated',
+                created='New data stored',
+                error='%s (see log for detaiils)',
+                illegal='Data incorrect'
+            )
+        )[lang]
 
     ########################################
 
@@ -51,17 +65,17 @@ class BarrelForms(object):
             try:
                 if model:
                     model.update(**kwargs)
-                    self.app.logger.flash('Gegevens opgeslagen', 'success')
+                    self.app.logger.flash(self.messages['updated'], 'success')
                 else:
-                    print kwargs
+                    # print kwargs
                     model_class.create(**kwargs)
-                    self.app.logger.flash('Nieuwe gegevens opgeslagen', 'success')
+                    self.app.logger.flash(self.messages['created'], 'success')
             except SQLAlchemyError as e:
                 self.app.db.session.rollback()
-                self.app.logger.flash('%s (See log for details)' % e.message, 'error', e)
+                self.app.logger.flash(self.messages['error'] % e.message, 'error', e)
         else:
             if request.method == 'POST':
-                self.app.logger.flash('Gegevens onjuist', 'error', form.errors)
+                self.app.logger.flash(self.messages['illegal'], 'error', form.errors)
         return form
 
     ########################################
