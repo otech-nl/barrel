@@ -100,8 +100,7 @@ $(document).ready(function() {
 {{ messages(True) }}
 {% endmacro %}
 
-{% macro menu_items(commands, ul_class="nav navbar-nav") %}
-<ul class="{{ul_class}}">
+{% macro menu_items(commands, nav_class="nav") %}
     {% for cmd, label in commands %}
         {% if cmd is string %}
             <li {% if cmd == active_page %}class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}</a></li>
@@ -112,16 +111,27 @@ $(document).ready(function() {
             </li>
         {% endif %}
     {% endfor %}
-</ul>
 {% endmacro %}
 
 {% macro navigation(title, commands) %}
-<nav class="navbar navbar-default">
+<nav>
+<ul class="nav">
+    <li><a class="navbar-brand" href="{{ url_for('home')}}">{{title}}</a></li>
+    {{ menu_items(commands) }}
+    <li class="right"><a href="{{ url_for('profile')}}">{{current_user}}</a></li>
+</ul>
+</nav>
+{% endmacro %}
+
+{% macro navigation_bootstrap(title, commands, nav_class="navbar navbar-default") %}
+<nav class="{{nav_class}}">
   <div class="container-fluid">
     <div class="navbar-header">
       <a class="navbar-brand" href="{{ url_for('home')}}">{{title}}</a>
     </div>
-    {{ menu_items(commands) }}
+    <ul class="nav navbar-nav">
+    {{ menu_items(commands, ul_class="nav navbar-nav") }}
+    </ul>
     <p class="navbar-text navbar-right"><a href="{{ url_for('profile')}}" class="navbar-link">{{current_user}}</a></p>  </div>
 </nav>
 <script>
