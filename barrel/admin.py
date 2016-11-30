@@ -1,5 +1,9 @@
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
+try:
+    from flask_admin import Admin
+    from flask_admin.contrib.sqla import ModelView
+except ImportError as e:
+    module = str(e).split()[-1]
+    print 'Please run "pip install %s"' % module
 
 ########################################
 

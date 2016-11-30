@@ -7,23 +7,6 @@ from wtforms_alchemy import model_form_factory
 
 class BarrelForms(object):
 
-    class ModelForm(model_form_factory(
-            Form,
-            date_format='%d-%m-%Y',
-            datetime_format='%d-%m-%Y %H:%M')):
-        def __iter__(self):
-            ''' make the 'only' attribute order-sensitive '''
-            field_order = getattr(self, 'only', None)
-            if field_order:
-                temp_fields = []
-                for name in field_order:
-                    if name == '*':
-                        temp_fields.extend([f for f in self._unbound_fields if f[0] not in field_order])
-                    else:
-                        temp_fields.append([f for f in self._unbound_fields if f[0] == name][0])
-                self._unbound_fields = temp_fields
-            return super(Form, self).__iter__()
-
     class FormModelMixin(object):
         @classmethod
         def get_form(cls):
@@ -38,7 +21,7 @@ class BarrelForms(object):
 
     ########################################
 
-    def __init__(self, app, messages=None, lang='en'):
+    def __init__(self, app, messages=None, lang='en', date_format=None, datetime_format=None):
         self.app = app
         self.messages = messages or dict(
             nl=dict(
@@ -54,6 +37,21 @@ class BarrelForms(object):
                 illegal='Data incorrect'
             )
         )[lang]
+
+        class ModelForm(model_form_factory(Form, date_format=date_format, datetime_format=datetime_format)):
+            def __iter__(self):
+                ''' make the 'only' attribute order-sensitive '''
+                field_order = getattr(self, 'only', None)
+                if field_order:
+                    temp_fields = []
+                    for name in field_order:
+                        if name == '*':
+                            temp_fields.extend([f for f in self._unbound_fields if f[0] not in field_order])
+                        else:
+                            temp_fields.append([f for f in self._unbound_fields if f[0] == name][0])
+                            self._unbound_fields = temp_fields
+                return super(Form, self).__iter__()
+        BarrelForms.ModelForm = ModelForm
 
     ########################################
 
@@ -91,9 +89,9 @@ class BarrelForms(object):
 
 ########################################
 
-def enable(app):
+def enable(app, **kwargs):
     app.logger.info('Enabling forms')
-    app.forms = BarrelForms(app)
+    app.forms = BarrelForms(app, **kwargs)
     return app.forms
 
 ########################################

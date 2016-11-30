@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from pprint import pformat
 
 ########################################
 
@@ -26,11 +27,12 @@ def enable(app):
 
         @classmethod
         def create(cls, commit=True, **kwargs):
-            app.logger.report('Creating %s: %s' % (cls.__name__, kwargs))
+            app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
             # print 'CREATE %s' % cls
             cls.__clean_kwargs(kwargs)
             # print '   %s' % kwargs
             obj = cls(**kwargs)
+            obj.before_create()
             db.session.add(obj)
             if commit: obj.save()
             obj.after_create()
@@ -45,10 +47,11 @@ def enable(app):
             return cls.query.get_or_404(id)
 
         def update(self, commit=True, **kwargs):
-            app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__, self, kwargs))
+            app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__, self, pformat(kwargs)))
             self.__clean_kwargs(kwargs)
             # print 'UPDATE %s' % self
             # print '   %s' % kwargs
+            self.before_update()
             for attr, value in kwargs.iteritems():
                 setattr(self, attr, value)
             if commit: self.save()
@@ -64,7 +67,13 @@ def enable(app):
             db.session.delete(self)
             return commit and db.session.commit()
 
+        def before_create(self):
+            pass
+
         def after_create(self):
+            pass
+
+        def before_update(self):
             pass
 
         def after_update(self):

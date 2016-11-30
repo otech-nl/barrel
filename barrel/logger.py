@@ -36,11 +36,12 @@ def enable(app):
             app.logger.info(msg)
     app.logger.report = report
 
-    def flash(msg, level='info', details=''):
+    def flash(msg, level='info', details='', report=True):
         flask.flash(msg, level)
         if not details:
             details = ''.join(traceback.format_tb(sys.exc_traceback)) if hasattr(sys, 'exc_traceback') else None
-        report(msg, level, details)
+        if report:
+            app.logger.report(msg, level, details)
     app.logger.flash = flash
 
 

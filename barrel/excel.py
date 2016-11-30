@@ -1,4 +1,8 @@
-from openpyxl import load_workbook
+try:
+    from openpyxl import load_workbook
+except ImportError as e:
+    module = str(e).split()[-1]
+    print 'Please run "pip install %s"' % module
 
 class ExcelObject(object):
     ''' an object that is derived from an Excel spreadsheet '''

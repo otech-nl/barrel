@@ -3,8 +3,9 @@ from forms import BarrelForms
 
 class BarrelCollection(object):
 
-    def __init__(self, app):
+    def __init__(self, app, template):
         app.logger.info('Enabling %s' % self.__class__.__name__)
+        self.template = template
         self.app = app
 
     ########################################
@@ -59,7 +60,8 @@ class BarrelCollection(object):
 
     ########################################
 
-    def render(self, parent, children, template='barrel/collection.html', allow_add=True, **kwargs):
+    def render(self, parent, children, template=None, allow_add=True, **kwargs):
+        template = template or self.template 
         title = ''
         if parent:
             form = kwargs[parent.form_name()] = parent.handle_form(self.app)
@@ -71,15 +73,17 @@ class BarrelCollection(object):
 
         children_data = []
         for child in children:
-            kwargs[child.form_name()] = child.handle_form(self.app, parent)
+            form = child.handle_form(self.app, parent)
+            kwargs[child.form_name()] = form
             children_data.append(dict(
-                modelName=child.model_name(),
+                allow_add=allow_add,
                 api=child.api_name(),
-                subtitle=child.title,
                 columns=child.columns,
                 filters=child.filters,
-                hide_subform=not kwargs[child.form_name()].errors,
-                allow_add=allow_add,
+                form=form,
+                hide_subform=not form.errors,
+                modelName=child.model_name(),
+                subtitle=child.title,
             ))
 
         # breadcrums = BarrelForms.breadcrums(parent.model.parent())
@@ -98,6 +102,6 @@ class BarrelCollection(object):
 
 ########################################
 
-def enable(app):
-    app.collection = BarrelCollection(app)
+def enable(app, template='barrel/collection.html'):
+    app.collection = BarrelCollection(app, template)
     return app.collection

@@ -27,19 +27,10 @@ setup(name='flask_barrel',
       license='CC BY-NC-ND',
       packages=['barrel'],
       install_requires=[
-          'flask-admin',
-          'flask-debugtoolbar',
-          'flask-restless<1.0.0',
-          'flask-mail',
           'flask-security',
           'flask-sqlalchemy',
           'wtforms-alchemy'
       ],
-      # test_suite='nose.collector',
-      # tests_require=['nose', 'nose-cover3'],
-      # entry_points={
-      #     'console_scripts': ['funniest-joke=funniest.command_line:main'],
-      # },
       include_package_data=True,
       platforms='any',
       zip_safe=False)
