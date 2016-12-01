@@ -29,10 +29,6 @@ def init(name):
     logger.enable(app)
     app.logger.info('App name: %s' % app.name)
 
-    # if 'DEBUG' in app.config and app.config['DEBUG']:
-    #     from flask_debugtoolbar import DebugToolbarExtension
-    #     DebugToolbarExtension(app)
-
     if 'SQLALCHEMY_DATABASE_URI' in app.config:
         db.enable(app)
 

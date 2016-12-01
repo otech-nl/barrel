@@ -26,11 +26,9 @@ def enable(app):
                 del kwargs[r]
 
         @classmethod
-        def create(cls, commit=True, **kwargs):
-            app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
-            # print 'CREATE %s' % cls
+        def create(cls, commit=True, report=True, **kwargs):
+            if report: app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
             cls.__clean_kwargs(kwargs)
-            # print '   %s' % kwargs
             obj = cls(**kwargs)
             obj.before_create()
             db.session.add(obj)
@@ -46,8 +44,8 @@ def enable(app):
         def get_or_404(cls, id):
             return cls.query.get_or_404(id)
 
-        def update(self, commit=True, **kwargs):
-            app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__, self, pformat(kwargs)))
+        def update(self, commit=True, report=True, **kwargs):
+            if report: app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__, self, pformat(kwargs)))
             self.__clean_kwargs(kwargs)
             # print 'UPDATE %s' % self
             # print '   %s' % kwargs
