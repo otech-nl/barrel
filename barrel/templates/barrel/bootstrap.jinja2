@@ -1,0 +1,7 @@
+{% macro symbol(name) -%}
+  <span class="glyphicon glyphicon-{{name}}" aria-hidden="true"></span>
+{%- endmacro %}
+
+{% macro input_symbol(name) -%}
+    <span class="glyphicon glyphicon-{{name}} form-control-feedback"></span>
+{%- endmacro %}

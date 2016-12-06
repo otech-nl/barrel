@@ -1,0 +1,86 @@
+{% from "barrel/forms.jinja2" import render_field %}
+{% from "barrel/bootstrap.jinja2" import symbol %}
+
+{% macro render_row(fields, fill=False, readonly=[], show_labels=true) -%}
+  <div class="row">
+    {% if fields is iterable %}
+      {% for (field, cols) in fields %}
+        <div class="col-md-{{cols}}">{{ render_field(field, readonly=(field in readonly), show_label=show_labels) }}</div>
+      {% endfor %}
+    {% else %}
+      <div class="col-md-12">{{ render_field(fields, readonly=readonly, show_label=show_labels) }}</div>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{% macro render_form(form, fields=None, id="form", method="POST", action_url='', readonly=false, enctype=None) -%}
+  <form method={{method}} id="{{id}}" action="{{ action_url }}" role="form"{% if enctype %} enctype={{enctype}}{% endif %}>
+    {{ form.hidden_tag() if form.hidden_tag }}
+    {% if caller %}
+      {{ caller() }}
+    {% else %}
+      {% for f in fields or form %}
+        {{ render_field(f, readonly=readonly) }}
+      {% endfor %}
+    {% endif %}
+    {% if readonly %}
+      <script>
+        $(document).ready(function() {
+        $('form#{{id}} input').each(function(i,e) {
+        // $(e).attr('disabled', true);
+        $(e).parent().html($(e).val());
+        })
+        $('form#{{id}} select').each(function(i,e) {
+        $(e).parent().html($(e).val());
+        })
+        $('form#{{id}} textarea').each(function(i,e) {
+        $(e).parent().html($(e).val());
+        })
+        })
+      </script>
+    {% else %}
+      <center><div id="progress"></div></center>
+      <div class="buttons">
+        {# <button type="button" class="btn btn-default" data-dismiss="modal">{{symbol('remove')}} Cancel</button> #}
+        <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign')}} Save</button>
+      </div>
+      <script>
+        $(document).ready(function(){
+        $('form').submit(function() {
+        $('div#progress').html('<progress></progress>');
+        })
+        })
+      </script>
+    {% endif %}
+  </form>
+{%- endmacro %}
+
+{% macro form_modal(form, api, show, model=None) %}
+  {% set id = api+"Modal" %}
+  <div class="modal fade" id="{{id}}" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h2 class="modal-title">{{api | capitalize}} bewerken</h2>
+        </div>
+        <div class="modal-body">
+          {% include "forms/"+api+".jinja2" %}
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+  
+  <a class="btn btn-primary" href="{{url_for(api, id=0)}}">{{symbol('plus')}} Voeg {{api}} toe</a>
+  
+  {% if show %}
+    <script>
+      $(document).ready(function(){
+      $('#{{id}}').modal('show');
+      })
+    </script>
+  {% endif %}
+{% endmacro %}
+

@@ -1,0 +1,19 @@
+{% from "barrel/forms.bootstrap.jinja2" import form_modal %}
+
+{% macro datatable(form, api, columns, show_form=false, model=None, type='json') %}
+  {% set columns = ['id'] + columns %}
+  <h2>{{api | capitalize}}-overzicht</h2>
+  <table id="{{api}}" class="display table table-striped" cellspacing="0" width="100%">
+    <thead><tr>{% for col in columns %}<th>{{col}}</th>{% endfor %}</tr></thead>
+    <tbody></tbody>
+  </table>
+  <script>
+    $(document).ready(function() {
+    {{type}}_datatables("{{api}}", {{columns | tojson}})
+    });
+  </script>
+  
+  {% if form %}
+    {{ form_modal(form, api, show_form, model=model) }}
+  {% endif %}
+{% endmacro  %}
