@@ -4,7 +4,8 @@ from pprint import pformat
 
 ########################################
 
-def enable(app):
+
+def enable(app):  # noqa: C901
     if app.config['SQLALCHEMY_DATABASE_URI'] == 'default':
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s.db' % app.name
     app.logger.info('Enabling DB with %s' % app.config['SQLALCHEMY_DATABASE_URI'])
@@ -20,19 +21,21 @@ def enable(app):
             cols = cls.__dict__
             rem = []    # columns to be removed
             for k in kwargs:
-                if not k in cols and not '_%s'%k in cols and not '%s_id'%k in cols:
+                if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols:
                     rem.append(k)
             for r in rem:
                 del kwargs[r]
 
         @classmethod
         def create(cls, commit=True, report=True, **kwargs):
-            if report: app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
+            if report:
+                app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
             cls.__clean_kwargs(kwargs)
             obj = cls(**kwargs)
             obj.before_create()
             db.session.add(obj)
-            if commit: obj.save()
+            if commit:
+                obj.save()
             obj.after_create()
             return obj
 
@@ -45,14 +48,18 @@ def enable(app):
             return cls.query.get_or_404(id)
 
         def update(self, commit=True, report=True, **kwargs):
-            if report: app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__, self, pformat(kwargs)))
+            if report:
+                app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__,
+                                                            self,
+                                                            pformat(kwargs)))
             self.__clean_kwargs(kwargs)
             # print 'UPDATE %s' % self
             # print '   %s' % kwargs
             self.before_update()
             for attr, value in kwargs.iteritems():
                 setattr(self, attr, value)
-            if commit: self.save()
+            if commit:
+                self.save()
             self.after_update()
             return self
 
@@ -88,7 +95,7 @@ def enable(app):
         deleted_at = db.Column(db.DateTime, default=None)
 
         def delete(self, commit=True, undelete=False):
-            print '############## SOFT DELETE'
+            print('############## SOFT DELETE')
             if undelete:
                 self.deleted_at = None
             else:
@@ -107,14 +114,14 @@ def enable(app):
 
         @classmethod
         def query(cls, *args, **kwargs):
-            print '############## SOFT QUERY'
+            print('############## SOFT QUERY')
             if not args:
                 query = cls._query(cls)
             else:
                 query = cls._query(*args)
 
-            if "include_deleted" not in kwargs or kwargs["include_deleted"] is False:
-                query = query.filter(cls.deleted_at == None)
+            if "include_deleted" not in kwargs or not kwargs["include_deleted"]:
+                query = query.filter(cls.deleted_at is None)
 
             return query
 
@@ -164,6 +171,7 @@ def enable(app):
     db.BaseModel = BaseModel
 
     return db
+
 
 def init(app):
     app.logger.info('Initializing DB')

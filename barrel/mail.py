@@ -6,6 +6,7 @@ except ImportError as e:
 
 ########################################
 
+
 def enable(app):
     app.logger.info('Enabling mail')
     app.mail = Mail(app)

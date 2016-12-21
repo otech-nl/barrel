@@ -8,6 +8,7 @@ import traceback
 
 ########################################
 
+
 def enable(app):
     if app.config['LOGGER_NAME'] == app.name:
         app.config['LOGGER_NAME'] = './%s.log' % app.name
@@ -25,9 +26,10 @@ def enable(app):
         user = ''
         if current_user and not isinstance(current_user, AnonymousUser):
             user = '[%s] ' % current_user
-        if details: details = ' (%s)' % details
+        if details:
+            details = ' (%s)' % details
         msg = '%s%s%s' % (user, msg, details)
-        print msg
+        print(msg)
         if level == 'error':
             app.logger.error(msg)
         elif level == 'warning':
@@ -38,11 +40,10 @@ def enable(app):
 
     def flash(msg, level='info', details='', report=True):
         flask.flash(msg, level)
-        if not details:
-            details = ''.join(traceback.format_tb(sys.exc_traceback)) if hasattr(sys, 'exc_traceback') else None
         if report:
             app.logger.report(msg, level, details)
+            if hasattr(sys, 'exc_traceback'):
+                app.logger.report(msg, level, ''.join(traceback.format_tb(sys.exc_traceback)))
     app.logger.flash = flash
-
 
     return app.logger

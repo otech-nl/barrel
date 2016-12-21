@@ -1,24 +1,25 @@
 from flask import Flask, Blueprint
 
 import db
-import forms
+import forms  # noqa: F401
 import logger
-import security
+import security  # noqa: F401
 
 ########################################
 
 import sys
-reload(sys)
+reload(sys)  # noqa: F821
 sys.setdefaultencoding('utf-8')
 
 ########################################
+
 
 def init(name):
     class Barrel(Blueprint):
         def __init__(self, app):
             Blueprint.__init__(self, __name__, __name__,
-                template_folder='templates',
-                static_folder='static/barrel')
+                               template_folder='templates',
+                               static_folder='static/barrel')
     app = Flask(name)
     app.register_blueprint(Barrel(app))
     app.config.from_object('cfg')
@@ -33,4 +34,3 @@ def init(name):
         db.enable(app)
 
     return app
-

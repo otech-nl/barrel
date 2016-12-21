@@ -1,6 +1,7 @@
 from flask import render_template, request
 from forms import BarrelForms
 
+
 class BarrelCollection(object):
 
     def __init__(self, app, template):
@@ -61,7 +62,7 @@ class BarrelCollection(object):
     ########################################
 
     def render(self, parent, children, template=None, allow_add=True, **kwargs):
-        template = template or self.template 
+        template = template or self.template
         title = ''
         if parent:
             form = kwargs[parent.form_name()] = parent.handle_form(self.app)
@@ -89,7 +90,7 @@ class BarrelCollection(object):
         # breadcrums = BarrelForms.breadcrums(parent.model.parent())
         try:
             breadcrums = BarrelForms.breadcrums(parent.model.parent())
-        except Exception, e:
+        except Exception as e:
             breadcrums = None
 
         return render_template(
@@ -101,6 +102,7 @@ class BarrelCollection(object):
             **kwargs)
 
 ########################################
+
 
 def enable(app, template='barrel/collection.html'):
     app.collection = BarrelCollection(app, template)

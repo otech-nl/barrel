@@ -5,11 +5,13 @@ function form_modal_open(element, id) {
     $('#'+element+'Modal').modal('show');
 }
 
-function init_datatables(element, column_names, user_options) {
+function init_datatable(element, column_names, user_options) {
     var options = {
+        // map column names
         columns: column_names.map(function(el) {
             return {data: el};
         }),
+        // hide id column
         columnDefs: [{
             targets: [0],
             visible: false,
@@ -39,41 +41,42 @@ function init_datatables(element, column_names, user_options) {
         }
     };
     Object.assign(options, user_options)
+
+    return options;
+}
+
+function create_datatable(element, options, register_click) {
     var table = $('table#'+element).DataTable(options);
 
-    table.on('click', 'tbody td', function() {
-        var data = table.row(this).data();
-        window.location = "/"+element+"/"+data.id;
-        // form_modal_open(element, data.id);
-    })
-
+    if(register_click) {
+        table.on('click', 'tbody td', function() {
+            var data = table.row(this).data();
+            window.location = "/"+element+"/"+data.id;
+        })
+    }
+    
     return table;
 }
     
-function json_datatables(element, column_names) {
-    var options = {
+function json_datatable(element, column_names) {
+    var options = init_datatable(element, column_names, {
         serverSide: true,
         processing: true,
         ajax: {
             url: '/api/'+element,
         }
-    }
-    return init_datatables(element, column_names, options);
+    });
+    return create_datatable(element, options, true);
 }
 
-function basic_datatables(element, column_names) {
-    var options ={'searching': false, 'paging': false, 'lengthChange': false, 'info': false};
-    return init_datatables(element, column_names, options);
+function basic_datatable(element, column_names, user_options, disable_click) {
+    var options = init_datatable(element, column_names, {
+        'searching': false,
+        'paging': false,
+        'lengthChange': false,
+        'info': false
+    });
+    Object.assign(options, user_options)
+    return create_datatable(element, options, !disable_click);
 }
 
-$(document).ready(function(){
-    $('input[type=date]').attr('type','text').datepicker({
-        format: "yyyy-m-d",
-        language: "nl"
-    });
-    // set type=text to disable default chrome datepicker
-    $('input[type=time]').attr('type','text').timepicker({
-        showMeridian: false,
-        maxHours: 24
-    });
-})

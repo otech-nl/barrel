@@ -2,7 +2,8 @@ try:
     from openpyxl import load_workbook
 except ImportError as e:
     module = str(e).split()[-1]
-    print 'Please run "pip install %s"' % module
+    print('Please run "pip install %s"' % module)
+
 
 class ExcelObject(object):
     ''' an object that is derived from an Excel spreadsheet '''
@@ -20,7 +21,8 @@ class ExcelObject(object):
     @classmethod
     def sheet2array(cls, sheet, first_row=1):
         ''' derive objects from a worksheet '''
-        # print 'Reading %s records (%s) from row %d with key column "%s"' % (cls.__name__, sheet, first_row, cls.key_column)
+        print('Reading %s records (%s) from row %d with key column "%s"' %
+              (cls.__name__, sheet, first_row, cls.key_column))
         cls.field_names = []
         key_column = None
         records = []
@@ -32,11 +34,13 @@ class ExcelObject(object):
             elif row_nr == first_row:
                 # print 'HEADERS'
                 for field in row:
-                    if not field.value: break
+                    if not field.value:
+                        break
                     cls.field_names.append(field.value)
                 key_column = cls.field_names.index(cls.key_column)
                 if not key_column:
-                    raise KeyError('Key column %s for %s not found' % (cls.key_column, cls.__name__))
+                    raise KeyError('Key column %s for %s not found' %
+                                   (cls.key_column, cls.__name__))
             else:
                 # print 'RECORD %d: %s' % (key_column, cls.field_names)
                 if row[key_column].value:

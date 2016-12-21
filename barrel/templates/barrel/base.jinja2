@@ -2,30 +2,30 @@
 
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>{{ title }}</title>
     {%- block head %}
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
-    <meta charset="utf-8">
+      <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+      <meta charset="utf-8">
     {% endblock head %}
     {% for link in stylesheets %}
-    <link rel='stylesheet' href="{{ url_for('static', filename=link) }}">
+      <link rel='stylesheet' href="{{ url_for('static', filename=link) }}">
     {% endfor %}
-</head>
-<body>
+  </head>
+  <body>
     {% block first %}
-    <script src='https://code.jquery.com/jquery-2.1.1.min.js'></script>
+      <script src='https://code.jquery.com/jquery-2.1.1.min.js'></script>
     {% endblock first %}
     {% block messages %} {{ macro.messages() }} {% endblock messages %}
     {%- block navigation %}{% endblock navigation -%}
     {%- block body %}EMPTY BODY{% endblock body -%}
     {%- block scripts %} {# mainly for CDN scripts #}
-    <script src='{{url_for('barrel.static', filename='js/utils.js')}}'></script>
+      <script src='{{url_for('barrel.static', filename='utils.js')}}'></script>
     {% endblock scripts -%}
     {% for script in scripts -%} {# for local scripts #}
-    <script src='{{ url_for('static', filename=script) }}'></script>
+      <script src='{{ url_for('static', filename=script) }}'></script>
     {% endfor -%}
     {%- block final %} {# final block, after all others have loaded #} {% endblock final -%}
-</body>
+  </body>
 </html>
 
