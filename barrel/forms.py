@@ -1,5 +1,5 @@
 from flask import request
-from flask_wtf import Form
+from flask_wtf import FlaskForm as Form
 from sqlalchemy.exc import SQLAlchemyError
 from wtforms_alchemy import model_form_factory
 
