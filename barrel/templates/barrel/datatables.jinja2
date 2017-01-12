@@ -2,7 +2,7 @@
 {% from "barrel/bootstrap.jinja2" import symbol %}
 
 {% macro datatable(api,
-  columns, form=None, rows=None, show_form=false, allow_add=True, model=None, readonly=false) %}
+  columns, form=None, rows=None, show_form=False, allow_add=True, model=None, readonly=False) %}
   {% set basic = rows is iterable and rows is not string %}
   {% set columns = ['id'] + columns %}
   {% set full_columns = columns + ["acties"] if basic and not readonly else columns %}
@@ -31,8 +31,8 @@
     {{type}}_datatable("{{api}}", {{full_columns | tojson}})
     });
   </script>
-  {% if allow_add %}
-  <a class="btn btn-primary" href="{{url_for(api, id=None, **kwargs)}}">{{symbol('plus')}} Voeg {{api}} toe</a>
+  {% if allow_add and not readonly %}
+  <a class="btn btn-primary" href="{{url_for(api, id=0, **kwargs)}}">{{symbol('plus')}} Voeg {{api}} toe</a>
   {% endif %}
   {% if form %}
     {{ form_modal(form, api, show_form, model=model, readonly=readonly) }}
