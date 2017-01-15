@@ -1,0 +1,32 @@
+{% macro naw(lid) %}
+  <b>{{lid.naam()}}</b><br>
+  {{lid.straat}} {{lid.huisnummer}} {{lid.toevoeging}}<br>
+  {{lid.postcode}} {{lid.plaats}}<br>
+  {{lid.categorie}} / {{lid.lidnummer}} / {% if lid.bondsnummer %}{{lid.bondsnummer}}{% else %}------{% endif %}
+{% endmacro %}
+
+{% macro qr(lid) %}
+  <img src="data:image/png;base64,{{lid.get_qr()}}" width=100>
+{% endmacro %}
+
+{% macro kaart(lid) %}
+  <style>
+    table {
+    margin: 10pt;
+    width: 250pt;
+    }
+    td {
+    padding: 5pt;
+    }
+  </style>
+  <table frame="box">
+    <tr>
+      <td>
+        {{ qr(lid) }}<br>
+        {{ naw(lid) }}
+      </td>
+      <td><img src="{{ url_for('static', filename='img/FLAL.png') }}" width=100></td>
+    </tr>
+  </table>
+{% endmacro %}
+

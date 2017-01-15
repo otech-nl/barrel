@@ -1,0 +1,34 @@
+{
+  "name": "union",
+  "config": {
+    "tl;dr": "static/node_modules"
+  },
+  "version": "0.0.1",
+  "description": "software voor verenigingen",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/otech-nl/union.git"
+  },
+  "keywords": [
+    "vereniging"
+  ],
+  "author": "steets@otech.nl",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/otech-nl/union/issues"
+  },
+  "homepage": "https://github.com/otech-nl/union#readme",
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "bootstrap-datepicker": "^1.6.4",
+    "bootstrap-timepicker": "^0.5.2",
+    "datatables": "^1.10.12",
+    "datatables-bootstrap": "0.0.1",
+    "jquery": "^3.1.1",
+    "toastr": "^2.1.2"
+  }
+}

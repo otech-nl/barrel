@@ -1,0 +1,58 @@
+@media (min-width: 768px) {
+  .modal-dialog {
+    width: 80%; /* Bootstrap default - 600px */
+  }
+  .modal-sm {
+    width: 80%; /* Bootstrap default - 300px */
+  }
+}
+@media (min-width: 992px) {
+  .modal-lg {
+    width: 80%; /* Bootstrap default - 900px */
+  }
+}
+
+h1, h2, h3, h4, legend {
+    color: #d9534f;
+    padding-top: 15pt
+}
+
+img#logo {
+    position: fixed;
+    top: 20px;
+    opacity: 0.8;
+    max-width: 15%;
+}
+
+.left {
+    left: 20px
+}
+
+.right {
+    right: 20px
+}
+
+div#main {
+    max-width: 80%;
+}
+
+.required::after {
+    content: " *";
+    color: red;
+}
+
+nav a {
+    font-weight: bold;
+    font-size: 120%;
+}
+
+div.container {
+    margin-left: 150px;
+}
+
+footer {
+    bottom: 5px;
+    text-align: right;
+    font-size: 80%;
+    color: darkgrey;
+}

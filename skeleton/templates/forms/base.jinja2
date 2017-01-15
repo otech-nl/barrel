@@ -1,0 +1,6 @@
+{% from "barrel/forms.bootstrap.jinja2" import render_form, render_row %}
+{% from "barrel/bootstrap.jinja2" import symbol %}
+
+{% block form %}
+  {{ render_form(form, id=api, readonly=readonly)}}
+{% endblock form %}

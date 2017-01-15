@@ -1,0 +1,8 @@
+{% extends "base.jinja2" %}
+{% from "barrel/forms.bootstrap.jinja2" import render_form, render_row %}
+
+{% block content %}
+  <h1>{{ model.naam }}</h1>
+
+  {{ render_form(form, id=api) }}
+{% endblock %}

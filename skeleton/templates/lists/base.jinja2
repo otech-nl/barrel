@@ -1,0 +1,10 @@
+{% extends "base.jinja2" %}
+
+{% from "barrel/datatables.jinja2" import datatable %}
+
+{% block content %}
+  {% block intro %}{% endblock %}
+  {% block list %}
+    {{ datatable(api, columns, form=form, show_form=show_form, model=model, readonly=readonly) }}
+  {% endblock %}
+{% endblock %}

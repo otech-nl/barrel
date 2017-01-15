@@ -1,0 +1,64 @@
+{% from "barrel/macros.jinja2" import messages %}
+
+<!doctype html>
+<html lang="us">
+  <head>
+    <meta charset="utf-8">
+    <title>Barrel</title>
+    <style>
+      table.login-box {
+      padding: 0px;
+      width: 260px;
+      }
+
+      td.login-box {
+      padding: 4px;
+      background-color: #5c9ccc;
+      color: #ffffff;
+      font-weight: normal;
+      vertical-align: top;
+      }
+    </style>
+  </head>
+  <body style="font-family: sans-serif; font-size: 9pt;">
+
+    {% macro render_field_with_errors(label, field) %}
+    <tr><td class="login-box"><label for="{{ field.id }}">{{ label }}</label></td>
+      <td class="login-box">
+        {{ field(**kwargs)|safe }}
+        {% if field.errors %}
+        <ul>
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+    </td></tr>
+    {% endmacro %}
+
+    <table style="margin: auto; padding-top: 100px">
+      <tr>
+        <td><img src="{{ url_for('barrel.static', filename='logo.jpg') }}" width=150></td>
+        <td>
+          <form action="{{ url_for_security('login') }}" style="width: 200px;" method="POST" name="login_form">
+            <div style="display:none;">
+              {{ login_user_form.hidden_tag() }}
+              <input id="next" name="next" type="hidden" value="home">
+            </div>
+            <table border=0 cellpadding=0 cellspacing=0 class="login-box">
+              <tr><td width="100%"> {{ messages() | safe }}</td></tr>
+              <tr><td>
+                  <table border=0 cellpadding=0 cellspacing=0 width=100%>
+                    {{ render_field_with_errors("Gebruiker", login_user_form.email) }}
+                    {{ render_field_with_errors("Wachtwoord", login_user_form.password) }}
+                    {{ render_field_with_errors("Onthoud mij", login_user_form.remember) }}
+                  </table>
+              </td></tr>
+              <tr><td class="login-box"><input id="submit" name="submit" type="submit" value="Inloggen"></td></tr>
+            </table>
+          </form>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

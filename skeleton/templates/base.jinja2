@@ -1,0 +1,75 @@
+{% extends "barrel/base.jinja2" %}
+
+{% set title = title or config['NAME'] %}
+{% from "barrel/macros.jinja2" import menu_items, toastr_messages with context %}
+
+{% macro navigation(title, commands) %}
+  <nav class="navbar navbar-default">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="{{ url_for('home')}}">
+        <img class="img-rounded" src={{ url_for('barrel.static', filename='logo.jpg') }} width=150>
+      </a>
+    </div>
+    <ul class="nav navbar-nav">
+      {{ menu_items(commands) }}
+    </ul>
+  </nav>
+  <script>
+    $(document).ready(function(){
+    $('.dropdown-submenu a.dropdown').on("click", function(e){
+    $(this).next('ul').toggle();
+    e.stopPropagation();
+    e.preventDefault();
+    });
+    });
+  </script>
+{% endmacro %}
+
+{% set stylesheets = [
+'node_modules/bootstrap/dist/css/bootstrap.min.css',
+'node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css',
+'node_modules/bootstrap-timepicker/css/bootstrap-timepicker.min.css',
+'node_modules/datatables-bootstrap/css/dataTables.bootstrap.min.css',
+'node_modules/toastr/build/toastr.min.css',
+'style.css'
+] %}
+
+{% set scripts = [
+'node_modules/bootstrap/dist/js/bootstrap.min.js',
+'node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js',
+'node_modules/bootstrap-datepicker/dist/locales/bootstrap-datepicker.nl.min.js',
+'node_modules/bootstrap-timepicker/js/bootstrap-timepicker.min.js',
+'node_modules/datatables/media/js/jquery.dataTables.min.js',
+'node_modules/datatables-bootstrap/js/dataTables.bootstrap.min.js',
+'node_modules/toastr/build/toastr.min.js'
+] %}
+
+{%- block scripts %}
+  {% for script in ['datatables', 'datetime'] %}
+    <script src='{{url_for('barrel.static', filename=script+'.js')}}'></script>
+  {% endfor %}
+{% endblock %}
+
+{% block first %}
+  <script src="{{url_for('static', filename='node_modules/jquery/dist/jquery.min.js')}}"></script>
+{% endblock first %}
+
+{% block messages %}
+{{ toastr_messages() }}
+{% endblock messages %}
+
+{%- block navigation %}
+  {% set menu = [
+  ('role', 'Rollen'),
+  ('user', 'Gebruikers'),
+  ('security.logout', 'Uitloggen')
+  ] %}
+  {{ navigation(title, menu)}}
+{% endblock navigation -%}
+
+{% block body %}
+  <div id="main" class="container">
+    {%- block content %}Barrel Skeleton installed succesfully{% endblock content -%}
+    <footer>Ingelogd als <a href="{{url_for('profiel', id=current_user.id)}}">{{current_user.email}}</a> - &copy; 2016-<script> document.write((new Date()).getFullYear()); </script> <a href="http://otech.nl">OTech BV</a></footer>
+  </div>
+{% endblock body -%}
