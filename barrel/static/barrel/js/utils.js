@@ -5,6 +5,7 @@ String.prototype.ucfirst = function() {
 }
 
 function parse_DMY2Date(text, dflt) {
+    // fix browser differences
     var date = dflt;
     if(text) {
         if(text.indexOf('-') >= 0) {
