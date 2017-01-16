@@ -1,19 +1,42 @@
 {% from "barrel/forms.bootstrap.jinja2" import form_modal %}
+{% from "barrel/bootstrap.jinja2" import symbol %}
 
-{% macro datatable(form, api, columns, show_form=false, model=None, type='json') %}
+{% macro datatable(api,
+  columns, form=None, rows=None, show_form=False, allow_add=True, model=None, readonly=False) %}
+  {% set basic = rows is iterable and rows is not string %}
   {% set columns = ['id'] + columns %}
+  {% set full_columns = columns + ["acties"] if basic and not readonly else columns %}
   <h2>{{api | capitalize}}-overzicht</h2>
   <table id="{{api}}" class="display table table-striped" cellspacing="0" width="100%">
-    <thead><tr>{% for col in columns %}<th>{{col}}</th>{% endfor %}</tr></thead>
-    <tbody></tbody>
+    <thead><tr>{% for col in full_columns %}<th>{{col}}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% if basic %}
+        {%- for row in rows %}
+          <tr>
+            {% for col in columns %} <td>{{row[col]}}</td>{% endfor %}
+            {% if not readonly %}
+              <td>
+                <a class="btn" href="{{url_for(api, id=row.id)}}">{{symbol('pencil')}}</a>
+                <a class="btn" href="{{url_for('action', model=api.capitalize(), action='delete', id=row.id)}}">{{symbol('remove')}} </a>
+              </td>
+            {% endif %} {# readonly #}
+          </tr>
+        {% endfor %}
+      {% endif %}
+    </tbody>
   </table>
+  {% set type = "basic" if basic else "json" %}
   <script>
     $(document).ready(function() {
-    {{type}}_datatable("{{api}}", {{columns | tojson}})
+    {{type}}_datatable("{{api}}", {{full_columns | tojson}})
     });
   </script>
-  
+  {% if allow_add and not readonly %}
+  <a class="btn btn-primary" href="{{url_for(api, id=0, **kwargs)}}">{{symbol('plus')}} Voeg {{api}} toe</a>
+  {% endif %}
   {% if form %}
-    {{ form_modal(form, api, show_form, model=model) }}
+    {{ form_modal(form, api, show_form, model=model, readonly=readonly) }}
   {% endif %}
 {% endmacro  %}
+
+

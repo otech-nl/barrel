@@ -26,15 +26,15 @@
     {% if readonly %}
       <script>
         $(document).ready(function() {
-        $('form#{{id}} input').each(function(i,e) {
-        // $(e).attr('disabled', true);
-        $(e).parent().html($(e).val());
+        console.log("setting readonly attribute");
+        $("form#{{id}} input").each(function(i,e) {
+        $(e).attr("disabled", true);
         })
-        $('form#{{id}} select').each(function(i,e) {
-        $(e).parent().html($(e).val());
+        $("form#{{id}} select").each(function(i,e) {
+        $(e).attr("disabled", true);
         })
-        $('form#{{id}} textarea').each(function(i,e) {
-        $(e).parent().html($(e).val());
+        $("form#{{id}} textarea").each(function(i,e) {
+        $(e).attr("disabled", true);
         })
         })
       </script>
@@ -42,7 +42,7 @@
       <center><div id="progress"></div></center>
       <div class="buttons">
         {# <button type="button" class="btn btn-default" data-dismiss="modal">{{symbol('remove')}} Cancel</button> #}
-        <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign')}} Save</button>
+        <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign')}} Verwerken</button>
       </div>
       <script>
         $(document).ready(function(){
@@ -55,7 +55,7 @@
   </form>
 {%- endmacro %}
 
-{% macro form_modal(form, api, show, model=None) %}
+{% macro form_modal(form, api, show, model=None, readonly=false) %}
   {% set id = api+"Modal" %}
   <div class="modal fade" id="{{id}}" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -73,9 +73,6 @@
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
 
-  {% set new_url = new_url or url_for(api, id=0) %}
-  <a class="btn btn-primary" href="{{new_url}}">{{symbol('plus')}} Voeg {{api}} toe</a>
-  
   {% if show %}
     <script>
       $(document).ready(function(){
