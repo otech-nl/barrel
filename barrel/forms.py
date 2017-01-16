@@ -16,10 +16,6 @@ class BarrelForms(object):
                     model = cls
             return FormClass
 
-        # @classmethod
-        # def get_form(cls):
-        #     return cls._get_form()
-
     ########################################
 
     def __init__(self, app, messages=None, lang='en', date_format=None, datetime_format=None):
