@@ -9,6 +9,7 @@ class MoneyWidget(widgets.Input):
         self.input_type = 'number'
 
     def __call__(self, field, **kwargs):
+        kwargs.setdefault('step', 0.01)
         return '<div class="input-group"><span class="input-group-addon">%s</span>%s</div>'\
                % (self.unit, super(MoneyWidget, self).__call__(field, **kwargs))
 
@@ -20,6 +21,5 @@ class MoneyField(fields.Field):
 class MoneyType(sqlalchemy.Numeric):
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('precision', 4)
         kwargs.setdefault('scale', 2)
         super(MoneyType, self).__init__(**kwargs)
