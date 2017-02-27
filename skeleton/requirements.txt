@@ -1,4 +1,4 @@
-# git+https://github.com/otech-nl/barrel
+git+https://github.com/otech-nl/barrel
 arrow
 begins
 flask-datatables

@@ -1,6 +1,6 @@
 import barrel
 
-app = barrel.init('barrel')
+app = barrel.init('MyBarrelApp')
 barrel.forms.enable(app, lang='nl')
 
 
