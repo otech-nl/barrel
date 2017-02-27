@@ -1,1 +1,2 @@
-recursive-include barrel/templates barrel/static *.*
+recursive-include barrel/static *.*
+recursive-include barrel/templates *.*
