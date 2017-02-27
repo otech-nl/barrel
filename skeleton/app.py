@@ -1,7 +1,7 @@
 import barrel
 
-app = barrel.init('union')
-barrel.forms.enable(app, lang='nl', date_format='%Y-%m-%d')
+app = barrel.init('barrel')
+barrel.forms.enable(app, lang='nl')
 
 
 if app.config['DEBUG']:

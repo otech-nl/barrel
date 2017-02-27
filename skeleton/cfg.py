@@ -1,4 +1,4 @@
-NAME = 'FLAL'
+NAME = 'barrel'
 DEBUG = True
 
 SECRET_KEY = 'v?.`!8P=OX*[D!n25NaAZ8W!A*t<)(@a'

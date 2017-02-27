@@ -15,13 +15,6 @@ db = app.db
 ########################################
 
 
-class EuroType(TypeDecorator):
-    # TODO: improve money handling (default precision, custom WTF field)
-    impl = db.Numeric
-
-########################################
-
-
 class BaseModel(db.BaseModel, db.CRUDMixin, app.forms.FormModelMixin):
     __abstract__ = True
 
