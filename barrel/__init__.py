@@ -24,6 +24,7 @@ def init(name):
     app.register_blueprint(Barrel(app))
     app.config.from_object('cfg')
 
+    app.config['NAME'] = app.name  # for use in Jinja2 templates
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
 
