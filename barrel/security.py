@@ -41,9 +41,3 @@ def enable(app, user_class, role_class=None):
     app.security.user_datastore = user_datastore
 
     return app.security
-
-
-def add_user(app, email, password, role, **extra):
-    user = app.security.user_datastore.create_user(email=email, password=password)
-    app.security.user_datastore.add_role_to_user(user, role)
-    return user

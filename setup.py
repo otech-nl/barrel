@@ -27,6 +27,8 @@ setup(name='flask_barrel',
       license='CC BY-NC-ND',
       packages=['barrel'],
       install_requires=[
+          'begins',
+          'flask-datatables',
           'flask-security',
           'flask-sqlalchemy',
           'wtforms-alchemy'
@@ -34,4 +36,3 @@ setup(name='flask_barrel',
       include_package_data=True,
       platforms='any',
       zip_safe=False)
-
