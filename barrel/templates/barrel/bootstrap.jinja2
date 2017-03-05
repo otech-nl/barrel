@@ -8,11 +8,12 @@
     <span class="glyphicon glyphicon-{{name}} form-control-feedback"></span>
 {%- endmacro %}
 
-{% macro navigation(title, commands) %}
+{% macro navigation(title, commands, logo=None) %}
+  {% set logo = logo or url_for('static', filename='img/%s.png' % config['NAME']) %}
   <nav class="navbar navbar-default">
     <div class="navbar-header">
       <a class="navbar-brand" href="{{ url_for('home')}}">
-        <img class="img-rounded" src={{ url_for('static', filename='img/%s.png' % config['NAME'])}} width=150>
+        <img class="img-rounded" src={{ logo }} width=150>
       </a>
     </div>
     <ul class="nav navbar-nav">
