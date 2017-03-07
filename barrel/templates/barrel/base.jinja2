@@ -26,5 +26,13 @@
       <script src='{{ url_for('static', filename=script) }}'></script>
     {% endfor -%}
     {%- block final %} {# final block, after all others have loaded #} {% endblock final -%}
+    <script>
+      $(document).ready(function() {
+      {%- block docready %}
+        {# autofocus on first input #}
+        $('form:first *:input[type!=hidden]:first').focus();
+      {% endblock docready -%}
+      });
+    </script>
   </body>
 </html>
