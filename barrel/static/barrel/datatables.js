@@ -14,7 +14,7 @@ function init_datatable(element, column_names, user_options) {
         // hide id column
         columnDefs: [{
             targets: [0],
-            visible: false,
+            visible: false
         }],
         language: {
             emptyTable: "Tabel is leeg",
@@ -40,7 +40,7 @@ function init_datatable(element, column_names, user_options) {
             }
         }
     };
-    Object.assign(options, user_options)
+    Object.assign(options, user_options);
 
     return options;
 }
@@ -52,18 +52,18 @@ function create_datatable(element, options, register_click) {
         table.on('click', 'tbody td', function() {
             var data = table.row(this).data();
             window.location = "/"+element+"/"+data.id;
-        })
+        });
     }
-    
+
     return table;
 }
-    
+
 function json_datatable(element, column_names) {
     var options = init_datatable(element, column_names, {
         serverSide: true,
         processing: true,
         ajax: {
-            url: '/api/'+element,
+            url: '/api/'+element
         }
     });
     return create_datatable(element, options, true);
@@ -71,12 +71,12 @@ function json_datatable(element, column_names) {
 
 function basic_datatable(element, column_names, user_options, disable_click) {
     var options = init_datatable(element, column_names, {
-        'searching': false,
-        'paging': false,
-        'lengthChange': false,
-        'info': false
+        searching: false,
+        paging: false,
+        lengthChange: false,
+        info: false,
+        sorting: []
     });
-    Object.assign(options, user_options)
+    Object.assign(options, user_options);
     return create_datatable(element, options, !disable_click);
 }
-
