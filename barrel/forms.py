@@ -1,4 +1,5 @@
-from flask import request
+from flask import abort, redirect, render_template, request, url_for
+from flask_security import current_user
 from flask_wtf import FlaskForm as Form
 from sqlalchemy.exc import SQLAlchemyError
 from wtforms_alchemy import model_form_factory
@@ -90,6 +91,66 @@ class BarrelForms(object):
             bc = BarrelForms.breadcrums(parent)
         bc.append(dict(route=obj.__class__.__name__.lower(), id=obj.id, name=str(obj)))
         return bc
+
+    ########################################
+
+    def render_page(self, id, model_class, template='lists/base.jinja2',
+                    form_class=None, next_page=None, columns='', **kwargs):
+        ''' render a list with a form modal '''
+        form_class = form_class or model_class.get_form()
+        model = model_class.get(id) if id else None
+        api = model_class.get_api()
+
+        show_form = (id == 0)
+        if api in request.form:  # update
+            form = self.handle_form(model_class, form_class, model=model)
+            show_form = bool(form.errors)
+        elif model:  # edit
+            form = form_class(None, obj=model)
+            show_form = True
+        else:  # new
+            form = form_class()
+
+        perm = current_user.get_permission(model)
+        if self.app.config['DEBUG']:
+            if perm == '-':
+                abort(403)
+                self.app.logger.report('%s template %s for %s (%s form, %s) with %s' %
+                                       (request.method, template, api, 'show' if show_form else 'hide',
+                                        perm, pformat(request.form)))
+            if form.errors:
+                self.app.logger.report('Form errors: %s' % form.errors)
+        if not next_page or form.errors:
+            return render_template(template,
+                                   api=api,
+                                   columns=columns.split(),
+                                   form=form,
+                                   model=model,
+                                   readonly=perm == 'ro',
+                                   show_form=show_form,
+                                   **kwargs)
+        else:
+            return redirect(next_page)
+
+    ########################################
+
+    def child_form(self, id, model_class, parent_id, parent_class, **kwargs):
+        ''' a generic function for a form of a model with a child '''
+        api = model_class.get_api()
+        parent_api = parent_class.get_api()
+        if not id:
+            kwargs['%s_id' % parent_api] = parent_id
+            obj = model_class.create(naam="Nieuwe %s" % api, **kwargs)
+            return redirect(url_for(api, id=obj.id))
+        else:
+            obj = model_class.get(id)
+            parent_id = getattr(obj, '%s_id' % parent_api)
+            next_page = url_for(parent_api, id=parent_id) if request.method == 'POST' else None
+            kwargs[parent_api] = parent_class.get(parent_id)
+            return self.render_page(id, model_class,
+                                    template='%s.jinja2' % api,
+                                    next_page=next_page,
+                                    **kwargs)
 
 ########################################
 
