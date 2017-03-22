@@ -1,4 +1,6 @@
+from datetime import datetime
 from flask import Flask, Blueprint
+from werkzeug.routing import BaseConverter, ValidationError
 
 import db
 import forms  # noqa: F401
@@ -33,5 +35,20 @@ def init(name):
 
     if 'SQLALCHEMY_DATABASE_URI' in app.config:
         db.enable(app)
+
+    class DateConverter(BaseConverter):
+        """Extracts a ISO8601 date from the path and validates it."""
+
+        regex = r'\d{4}-\d{1,2}-\d{1,2}'
+
+        def to_python(self, value):
+            try:
+                return datetime.strptime(value, '%Y-%m-%d').date()
+            except ValueError:
+                raise ValidationError()
+
+        def to_url(self, value):
+            return value.strftime('%Y-%m-%d')
+    app.url_map.converters['date'] = DateConverter
 
     return app
