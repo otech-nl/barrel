@@ -13,7 +13,7 @@
   </div>
 {%- endmacro %}
 
-{% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[]) -%}
+{% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[], model=None) -%}
   <form method={{method}} id="{{id}}" action="{{ action_url }}" role="form"{% if enctype %} enctype={{enctype}}{% endif %}>
     {{ form.hidden_tag() if form.hidden_tag }}
     {% if caller %}
@@ -26,7 +26,6 @@
     {% if readonly %}
       <script>
         $(document).ready(function() {
-        console.log("setting readonly attribute");
         $("form#{{id}} input").each(function(i,e) {
         $(e).attr("disabled", true);
         })
@@ -41,9 +40,11 @@
     {% else %}
       <center><div id="progress"></div></center>
       <div class="buttons">
-        {# <button type="button" class="btn btn-default" data-dismiss="modal">{{symbol('remove')}} Cancel</button> #}
-        {% for button in buttons %}{{button}}{% endfor %}
         <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign')}} Verwerken</button>
+        {% if model %}
+          <a class='btn btn-danger' onclick='delete_item()'>{{symbol("remove")}} Verwijderen</a>
+        {% endif %}
+        {% for button in buttons %}{{button}}{% endfor %}
       </div>
       <script>
         $(document).ready(function(){
@@ -51,6 +52,13 @@
         $('div#progress').html('<progress></progress>');
         })
         })
+        {% if model %}
+          function delete_item() {
+          if( confirm('Deze {{model.__table__}} en alle onderliggende gegevens worden verwijderd.\nWeet u het zeker?' )) {
+          $(location).attr('href', "{{ url_for('action', model=model.__table__, action='delete', id=model.id) }}");
+          }
+          }
+        {% endif %}
       </script>
     {% endif %}
   </form>

@@ -1,1 +1,1 @@
-git+https://github.com/otech-nl/barrel
+-e ..

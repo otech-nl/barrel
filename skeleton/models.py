@@ -1,9 +1,9 @@
 # coding=utf8
 from app import app
 from datetime import datetime
-from flask_security import RoleMixin
-from flask_security import current_user
+from flask_security import RoleMixin, current_user
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref
 from sqlalchemy.sql import func, desc
 from sqlalchemy.types import TypeDecorator
@@ -33,6 +33,9 @@ user_roles = db.Table('user_roles',
 class Role(BaseModel, RoleMixin):
     name = db.Column(db.String(80), unique=True)
 
+    def get_company_id(self):
+        return Company.get_admin_company().id
+
     def __repr__(self):
         return self.name
 
@@ -47,7 +50,14 @@ class User(db.User, db.CRUDMixin):
 
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     company = db.relationship("Company",
-                                 backref=backref("users", cascade='save-update, merge, delete'))
+                              backref=backref("users", cascade='save-update, merge, delete'))
+
+    @hybrid_property
+    def role(self):
+        return self.roles[0]
+
+    def get_company_id(self):
+        return self.company_id
 
     def has_access(self, model):
         return self.company_id == model.get_company_id()
@@ -62,7 +72,7 @@ class User(db.User, db.CRUDMixin):
                 else:
                     return '-'
             else:
-                return 'ro'
+                return 'rw'
         elif self.has_role('bestuur'):
             if not model or self.has_access(model):
                 return 'ro'
@@ -111,5 +121,9 @@ class Company(BaseModel, AdresMixin, NumberMixin):
 
     def __repr__(self):
         return self.abbr
+
+    @staticmethod
+    def get_admin_company():
+        return Company.query.filter_by(abbr=u'OTW').one()
 
 ########################################

@@ -59,11 +59,13 @@
 {% endblock messages %}
 
 {%- block navigation %}
-  {% set menu = [
-  ('role', 'Rollen'),
-  ('user', 'Gebruikers'),
-  ('security.logout', 'Uitloggen')
-  ] %}
+  {% set menu = [('security.logout', 'Uitloggen')] %}
+  {% if current_user.has_role('mod') or current_user.has_role('admin') %}
+    {% set menu = [('user', 'Gebruikers')] + menu %}
+  {% endif %}
+  {% if current_user.has_role('admin') %}
+    {% set menu = [('role', 'Rollen')] + menu %}
+  {% endif %}
   {{ navigation(title, menu)}}
 {% endblock navigation -%}
 

@@ -1,6 +1,8 @@
 {% from "barrel/forms.bootstrap.jinja2" import render_form, render_row %}
 {% from "barrel/bootstrap.jinja2" import symbol %}
 
+{% set model = model or None %}
+
 {% block form %}
-  {{ render_form(form, id=api, readonly=readonly)}}
+  {{ render_form(form, id=api, readonly=readonly, model=model)}}
 {% endblock form %}

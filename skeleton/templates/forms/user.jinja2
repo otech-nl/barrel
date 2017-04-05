@@ -1,0 +1,16 @@
+{% extends "forms/base.jinja2" %}
+
+{% block form %}
+  {% call render_form(form, id=api, readonly=readonly, model=model) %}
+    {% if 'company_id' in form %}
+      {{ render_row([(form.email, 4), (form.active, 2), (form.company_id, 3), (form.role, 3)]) }}
+    {% else %}
+      {{ render_row([(form.email, 6), (form.role, 3), (form.active, 3)]) }}
+    {% endif %}
+    {% if 'password' in form %}
+      {{ render_row([(form.password, 4), (form.new_password, 4), (form.confirm_password, 4)]) }}
+    {% else %}
+      {{ render_row([(form.new_password, 6), (form.confirm_password, 6)]) }}
+    {% endif %}
+  {% endcall %}
+{% endblock %}

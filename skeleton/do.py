@@ -49,7 +49,7 @@ def seed():
         abbr=u'OTW',
         name=u'OTech BV')
 
-    add_user('steets@otech', 'test123', 'admin', company=company)
+    add_user('steets@otech', 'test123', 'admin', company=Company.get_admin_company())
 
 ########################################
 

@@ -1,10 +1,12 @@
 {% extends "base.jinja2" %}
 
-{% from "barrel/datatables.jinja2" import datatable %}
+{% from "barrel/datatables.jinja2" import datatable with context %}
+
+{% set rows = rows or None %}
 
 {% block content %}
   {% block intro %}{% endblock %}
   {% block list %}
-    {{ datatable(api, columns, form=form, show_form=show_form, model=model, readonly=readonly) }}
+    {{ datatable(api, columns, rows=rows, form=form, show_form=show_form, model=model, readonly=readonly) }}
   {% endblock %}
 {% endblock %}
