@@ -45,6 +45,10 @@ def bootstrap(app):  # noqa: C901  too complex
         def role(self):
             return self.roles[0]
 
+        @hybrid_property
+        def role_id(self):
+            return self.role.id
+
         def has_access(self, model):
             ' (dummy) returns true if user has access to model '
             return self.company_id == model.get_company_id()
