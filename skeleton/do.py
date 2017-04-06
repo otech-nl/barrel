@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
-from app import app
-from models import Role, User, Company
-from barrel import do, security
+from models import Role, User, Group
+from barrel import do
 import begin
 
 
@@ -10,7 +9,7 @@ import begin
 
 @do.app_context
 @begin.subcommand
-def add_user(email, password, role_name, company):
+def add_user(email, password, role_name, group):
     try:
         role = Role.query.filter(Role.name == role_name).one()
     except:
@@ -18,16 +17,16 @@ def add_user(email, password, role_name, company):
         return
 
     try:
-        company_id = int(company)
+        group_id = int(group)
     except ValueError:
-        company_id = Company.query.filter(Company.abbr == company).one().id
+        group_id = Group.query.filter(Group.abbr == group).one().id
     except TypeError:
-        company_id = company.id
+        group_id = group.id
 
     User.create(email=email,
         password=password,
         roles=[role],
-        company_id=company_id)
+        group_id=group_id)
 
 ########################################
 
@@ -42,14 +41,14 @@ def seed():
     Role.create(name='mod')
     Role.create(name='user')
 
-    Company.create(
+    Group.create(
         abbr=u'OTH',
         name=u'OTech Holding BV')
-    company = Company.create(
+    group = Group.create(
         abbr=u'OTW',
         name=u'OTech BV')
 
-    add_user('steets@otech', 'test123', 'admin', company=Company.get_admin_company())
+    add_user('steets@otech', 'test123', 'admin', group=Group.get_admin_group())
 
 ########################################
 

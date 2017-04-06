@@ -64,7 +64,7 @@
     {% set menu = [('user', 'Gebruikers')] + menu %}
   {% endif %}
   {% if current_user.has_role('admin') %}
-    {% set menu = [('role', 'Rollen')] + menu %}
+    {% set menu = [('group', 'Groepen'), ('role', 'Rollen')] + menu %}
   {% endif %}
   {{ navigation(title, menu)}}
 {% endblock navigation -%}

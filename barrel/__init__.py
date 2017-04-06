@@ -2,10 +2,7 @@ from datetime import datetime
 from flask import Flask, Blueprint
 from werkzeug.routing import BaseConverter, ValidationError
 
-import db
-import forms  # noqa: F401
-import logger
-import security  # noqa: F401
+import db, forms, logger, rest, security  # noqa: F401, E401
 
 ########################################
 

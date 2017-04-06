@@ -45,9 +45,9 @@ def user(id):
         ])
     if current_user.has_role('admin'):
         if user:
-            UserForm.company_id = SelectField(models.Company, label='company', default=user.company_id)
+            UserForm.group_id = SelectField(models.Group, label='group', default=user.group_id)
         else:
-            UserForm.company_id = SelectField(models.Company, label='company')
+            UserForm.group_id = SelectField(models.Group, label='group')
     elif id:
         UserForm.password = wtforms.PasswordField('Huidig wachtwoord',
                                                   [wtforms.validators.Required()])
@@ -62,10 +62,10 @@ def user(id):
             kwargs['password'] = form.get('new_password')
         if form.get('role'):
             kwargs['roles'] = [models.Role.get(int(form.get('role')))]
-        if form.get('company_id'):
-            kwargs['company_id'] = int(form.get('company_id'))
+        if form.get('group_id'):
+            kwargs['group_id'] = int(form.get('group_id'))
         else:
-            kwargs['company_id'] = current_user.company_id
+            kwargs['group_id'] = current_user.group_id
 
         if user:
             user.update(**kwargs)
@@ -76,9 +76,9 @@ def user(id):
         columns='email role active'
         users = models.User.query
         if current_user.has_role('admin'):
-            columns += ' company'
+            columns += ' group'
         else:
-            users = users.filter_by(company_id=current_user.company_id)
+            users = users.filter_by(group_id=current_user.group_id)
         return app.forms.render_page(
             id,
             models.User,
@@ -98,8 +98,21 @@ def role(id):
             id,
             models.Role,
             template='lists/base.jinja2',
-            rows=models.Role.query.all(),
             columns='name'
+        )
+
+########################################
+
+
+@app.route('/group/', defaults={'id': None})
+@app.route('/group/<int:id>', methods=['GET', 'POST'])
+@roles_accepted('admin')
+def group(id):
+        return app.forms.render_page(
+            id,
+            models.Group,
+            template='lists/base.jinja2',
+            columns='abbr name'
         )
 
 ########################################

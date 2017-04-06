@@ -2,8 +2,8 @@
 
 {% block form %}
   {% call render_form(form, id=api, readonly=readonly, model=model) %}
-    {% if 'company_id' in form %}
-      {{ render_row([(form.email, 4), (form.active, 2), (form.company_id, 3), (form.role, 3)]) }}
+    {% if 'group_id' in form %}
+      {{ render_row([(form.email, 4), (form.active, 2), (form.group_id, 3), (form.role, 3)]) }}
     {% else %}
       {{ render_row([(form.email, 6), (form.role, 3), (form.active, 3)]) }}
     {% endif %}
