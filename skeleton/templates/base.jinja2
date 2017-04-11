@@ -2,28 +2,7 @@
 
 {% set title = title or config['NAME'] %}
 {% from "barrel/macros.jinja2" import menu_items, toastr_messages with context %}
-
-{% macro navigation(title, commands) %}
-  <nav class="navbar navbar-default">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="{{ url_for('home')}}">
-        <img class="img-rounded" src={{ url_for('barrel.static', filename='logo.jpg') }} width=150>
-      </a>
-    </div>
-    <ul class="nav navbar-nav">
-      {{ menu_items(commands) }}
-    </ul>
-  </nav>
-  <script>
-    $(document).ready(function(){
-    $('.dropdown-submenu a.dropdown').on("click", function(e){
-    $(this).next('ul').toggle();
-    e.stopPropagation();
-    e.preventDefault();
-    });
-    });
-  </script>
-{% endmacro %}
+{% from "barrel/bootstrap.jinja2" import navigation %}
 
 {% set stylesheets = [
 'node_modules/bootstrap/dist/css/bootstrap.min.css',

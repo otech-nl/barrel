@@ -2,7 +2,7 @@
 
 String.prototype.ucfirst = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
-}
+};
 
 function parse_DMY2Date(text, dflt) {
     var date = dflt;
@@ -48,11 +48,11 @@ function handle_period(start_element, end_element) {
             if(end_val) {
                 end_val = parse_DMY2Date(end_val);
                 start_element.datetimepicker({
-                    maxDate: end_val,
+                    maxDate: end_val
                 });
             }
         }
-    })
+    });
     if(!start_element.val()) {
         start_element.datetimepicker({
             value: new Date(today.getFullYear(), today.getMonth(), 1)
@@ -68,7 +68,7 @@ function handle_period(start_element, end_element) {
                 });
             }
         }
-    })
+    });
     if(!end_element.val()) {
         end_element.datetimepicker({
             value: new Date(today.getFullYear(), today.getMonth() + 1, 1)
@@ -112,15 +112,15 @@ $(document).ready(function () {
         defaultTime: now,
         defaultDate: now,
         dayOfWeekStart: 1,
-        weeks: true,
-    }
+        weeks: true
+    };
     $('[type=datetime]').attr('type','text').datetimepicker(options);
     // set type=text to disable default chrome datepicker
 
     $.extend(options, {
         closeOnDateSelect: true,
         format: 'd-m-Y',
-        timepicker: false,
-    })
+        timepicker: false
+    });
     $('[type=date]').attr('type','text').datetimepicker(options);
-})
+});

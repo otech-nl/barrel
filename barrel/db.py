@@ -41,7 +41,7 @@ def enable(app):  # noqa: C901
 
         @classmethod
         def get(cls, id):
-            return cls.query.get(id)
+            return db.session.query(cls).get(id)
 
         @classmethod
         def get_or_404(cls, id):
