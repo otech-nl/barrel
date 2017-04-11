@@ -5,6 +5,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 
 def bootstrap(app):  # noqa: C901  too complex
+    ''' prepare abstract Role and User classes '''
     db = app.db
 
     class Role(db.BaseModel, RoleMixin):
@@ -73,6 +74,7 @@ def bootstrap(app):  # noqa: C901  too complex
 def enable(app, user_class, role_class):
     app.logger.info('Enabling security')
     db = app.db
+    # create an m:n relation between users and roles
     user_roles = db.Table('user_roles',
                           db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                           db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
@@ -80,6 +82,8 @@ def enable(app, user_class, role_class):
         'Role',
         secondary=user_roles,
         backref=db.backref('users', lazy='dynamic'))
+
+    # configure security with role and user classes
     user_datastore = SQLAlchemyUserDatastore(app.db, user_class, role_class)
     app.security = Security(app, user_datastore)
     app.security.user_datastore = user_datastore

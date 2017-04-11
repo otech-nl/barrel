@@ -28,7 +28,6 @@ setup(name='flask_barrel',
       packages=['barrel'],
       install_requires=[
           'begins',
-          'flask-datatables',
           'flask-security',
           'flask-sqlalchemy',
           'wtforms-alchemy'

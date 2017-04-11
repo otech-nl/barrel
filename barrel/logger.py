@@ -18,11 +18,13 @@ def enable(app):
         '%(asctime)s %(levelname)s: %(message)s '
         # '[in %(pathname)s:%(lineno)d]'
     ))
+    # app.logger already exists, so we just configure it
     app.logger.handlers = []
     app.logger.addHandler(file_handler)
     app.logger.info('Enabled logger: %s' % log)
 
     def report(msg, level='info', details=''):
+        ''' log messages in a standardized fashion '''
         user = ''
         if current_user and not isinstance(current_user, AnonymousUser):
             user = '[%s] ' % current_user
@@ -39,6 +41,7 @@ def enable(app):
     app.logger.report = report
 
     def flash(msg, level='info', details='', report=True):
+        ''' send a message to the end user '''
         flask.flash(msg, level)
         if report:
             app.logger.report(msg, level, details)

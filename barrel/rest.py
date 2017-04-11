@@ -11,12 +11,14 @@ except ImportError as e:
 
 
 class SecureResource(rest.Resource):
+    ''' require login for access to resources '''
     method_decorators = [login_required]
 
 ########################################
 
 
 def datatables_api(app, model):
+    ''' create an API that is suitable for use with datatables '''
     resource, path, endpoint = datatables.get_resource(SecureResource, model, app.db.session,
                                                        basepath='/api/')
     app.api.add_resource(resource, path, endpoint=endpoint)
@@ -37,5 +39,6 @@ def enable(app, models=[]):
 
 
 def jsonify(query_result):
+    ''' prepare a SQLAlchemy query result for a JSON response '''
     result = [i.to_dict() for i in query_result]
     return flask.jsonify(result)
