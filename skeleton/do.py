@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf8
 from models import Role, User, Group
-from barrel import do
+from barrel.util import do
 import begin
 
 

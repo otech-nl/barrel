@@ -1,9 +1,9 @@
 # coding=utf8
 from app import app
 from sqlalchemy.orm import backref
-from sqlalchemy.sql import func
 import barrel
 
+barrel.forms.enable(app, lang='nl')
 db = app.db
 
 
@@ -20,6 +20,7 @@ class BaseModel(db.BaseModel, db.CRUDMixin, app.forms.FormModelMixin):
 
 barrel.security.bootstrap(app)
 
+
 class Role(db.Role, db.CRUDMixin, app.forms.FormModelMixin):
     def get_group_id(self):
         return Group.get_admin_group().id
@@ -29,7 +30,7 @@ class User(db.User, db.CRUDMixin):
 
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=False)
     group = db.relationship("Group",
-                              backref=backref("users", cascade='save-update, merge, delete'))
+                            backref=backref("users", cascade='save-update, merge, delete'))
 
     def get_group_id(self):
         return self.group_id

@@ -1,8 +1,7 @@
 from app import app
 import begin
-import db
 import functools
-import security
+from barrel import db
 
 
 def app_context(f):

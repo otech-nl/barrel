@@ -6,6 +6,7 @@ from pprint import pformat
 
 
 def enable(app):  # noqa: C901
+
     if app.config['SQLALCHEMY_DATABASE_URI'] == 'default':
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s.db' % app.name
     app.logger.info('Enabling DB with %s' % app.config['SQLALCHEMY_DATABASE_URI'])
@@ -174,6 +175,6 @@ def enable(app):  # noqa: C901
 
 
 def init(app):
-    app.logger.info('Initializing DB')
+    app.logger.info('Initializing DB %s' % app.db)
     app.db.drop_all()
     app.db.create_all()

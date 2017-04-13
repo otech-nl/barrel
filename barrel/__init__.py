@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, Blueprint
+import flask
 from werkzeug.routing import BaseConverter, ValidationError
 
 from . import db, forms, logger, rest, security, util  # noqa: F401, E401
@@ -14,19 +14,28 @@ try:
 except NameError:
     pass  # python3
 
+
+__current_app = None
+
 ########################################
 
 
 def init(name, cfg_obj='cfg'):
     ''' init Barrel '''
-    class Barrel(Blueprint):
+
+    global __current_app
+    if __current_app:  # KLUDGE: should work with flask.current_app
+        # singleton
+        return __current_app
+
+    class Barrel(flask.Blueprint):
         def __init__(self, app):
-            Blueprint.__init__(self, __name__, __name__,
-                               template_folder='templates',
-                               static_folder='static/barrel')
+            flask.Blueprint.__init__(self, __name__, __name__,
+                                     template_folder='templates',
+                                     static_folder='static/barrel')
 
     # create and configure Flask app
-    app = Flask(name)
+    __current_app = app = flask.Flask(name)
     app.register_blueprint(Barrel(app))
     app.config.from_object(cfg_obj)
 

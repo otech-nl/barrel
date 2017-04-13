@@ -1,7 +1,6 @@
 import barrel
 
 app = barrel.init('MyBarrelApp')
-barrel.forms.enable(app, lang='nl')
 
 
 if app.config['DEBUG']:

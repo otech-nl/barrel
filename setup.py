@@ -32,6 +32,9 @@ setup(name='flask_barrel',
           'flask-sqlalchemy',
           'wtforms-alchemy'
       ],
+      setup_requires=['pytest-runner'],
+      tests_require=['pytest', 'behave', 'faker'],
+      test_suite='tests',
       include_package_data=True,
       platforms='any',
       zip_safe=False)
