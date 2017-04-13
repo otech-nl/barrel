@@ -39,13 +39,13 @@
 
 {%- block navigation %}
   {% set menu = [('security.logout', 'Uitloggen')] %}
-  {% if current_user.has_role('mod') or current_user.has_role('admin') %}
+  {% if current_user.has_role('mod') %}
     {% set menu = [('user', 'Gebruikers')] + menu %}
   {% endif %}
   {% if current_user.has_role('admin') %}
-    {% set menu = [('group', 'Groepen'), ('role', 'Rollen')] + menu %}
+    {% set menu = [([('user', 'Users'), ('role', 'Roles'), ('init', 'Initialize database'), ('seed', 'Seed database')], 'Admin')] + menu %}
   {% endif %}
-  {{ navigation(title, menu)}}
+  {{ navigation(title, menu, url_for('barrel.static', filename='logo.jpg'))}}
 {% endblock navigation -%}
 
 {% block body %}

@@ -1,5 +1,6 @@
 # coding=utf8
 from app import app
+from datetime import date
 from sqlalchemy.orm import backref
 import barrel
 
@@ -54,4 +55,24 @@ class Group(BaseModel):
     def get_admin_group():
         return Group.query.filter_by(abbr=u'OTW').one()
 
+
 ########################################
+
+class Company(BaseModel):
+    name = db.Column(db.Unicode(30), nullable=False)
+
+    def __repr__(self):
+        return '%s: %s' % (self.name, ', '.join([m.user.name for m in self.customerships]))
+
+
+class Customership(BaseModel):
+    '''
+    association object
+    http://docs.sqlalchemy.org/en/latest/orm/basic_relationships.html#association-object
+    '''
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('customerships', lazy='dynamic'))
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('customerships', lazy='dynamic'))
+
+    join_date = db.Column(db.Date, default=date.today())

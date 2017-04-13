@@ -100,26 +100,26 @@ $(document).ready(function() {
 {{ messages(True) }}
 {% endmacro %}
 
-{% macro menu_items(commands, nav_class="nav") %}
+{% macro menu_items(commands, nav_class="nav navbar-nav") %}
+  <ul class="{{nav_class}}">
     {% for cmd, label in commands %}
         {% if cmd is string %}
             <li {% if cmd == active_page %}class="active"{% endif %}><a href="{{ url_for(cmd) }}">{{label | capitalize}}</a></li>
         {% else %}
-            <li class="dropdown-submenu">
-                <a class="dropdown">{{ label }}<span class="caret"></span></a>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ label }}<span class="caret"></span></a>
                 {{ menu_items(cmd, 'dropdown-menu')}}
             </li>
         {% endif %}
     {% endfor %}
+  </ul>
 {% endmacro %}
 
 {% macro navigation(title, commands) %}
 <nav>
-<ul class="nav">
     <li><a class="navbar-brand" href="{{ url_for('home')}}">{{title}}</a></li>
     {{ menu_items(commands) }}
     <li class="right"><a href="{{ url_for('profile')}}">{{current_user}}</a></li>
-</ul>
 </nav>
 {% endmacro %}
 

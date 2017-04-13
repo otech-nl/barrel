@@ -1,9 +1,10 @@
 from app import app
 from flask import redirect, render_template, request, url_for
-from flask_security import current_user, login_required, utils as security, roles_accepted
+from flask_security import current_user, login_required, utils as security, roles_accepted, logout_user
 import barrel
 import models
 import wtforms
+import do
 
 
 def SelectField(model, label_field='name', label=None, **kwargs):
@@ -86,6 +87,28 @@ def user(id):
             columns=columns,
             form_class=UserForm,
             rows=users)
+
+########################################
+
+
+@app.route('/init/', defaults={'status': None})
+@app.route('/init/<status>')
+@roles_accepted('admin')
+def init(status):
+    if status == 'confirmed':
+        logout_user()
+        do.init()
+        return redirect(url_for('security.login'))
+    else:
+        return render_template('reset.jinja2')
+
+########################################
+
+
+@app.route('/seed')
+@roles_accepted('admin')
+def seed():
+    do.seed()
 
 ########################################
 
