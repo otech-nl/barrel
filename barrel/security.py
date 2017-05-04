@@ -76,10 +76,10 @@ def enable(app, user_class, role_class):
     db = app.db
     # create an m:n relation between users and roles
     user_roles = db.Table('user_roles',
-                          db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                          db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+                          db.Column('user_id', db.Integer(), db.ForeignKey('%s.id' % user_class.__tablename__)),
+                          db.Column('role_id', db.Integer(), db.ForeignKey('%s.id' % role_class.__tablename__)))
     user_class.roles = db.relationship(
-        'Role',
+        role_class.__name__,
         secondary=user_roles,
         backref=db.backref('users', lazy='dynamic'))
 

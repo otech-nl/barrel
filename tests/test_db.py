@@ -1,7 +1,7 @@
 ''' test barrel database module '''
 
 
-def setup_module(app):
+def setup_module(module):
     import sys
     sys.path.append('skeleton')
 

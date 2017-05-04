@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from pprint import pformat
+from sqlalchemy.orm import backref
 
 ########################################
 
@@ -139,6 +140,37 @@ def enable(app):  # noqa: C901
         __abstract__ = True
 
         id = db.Column(db.Integer, primary_key=True)
+
+        @classmethod
+        def add_reference(cls, peer, name=None, rev_name=None, nullable=False, one_to_one=False,
+                          rev_cascade='save-update, merge, delete', default=None):
+            ''' bundles all the paperwork for making a relation and provides some sensible defaults '''
+            peer_name = peer.__tablename__
+            name = name or peer_name
+            rev_name = rev_name or (cls.__tablename__ if one_to_one else cls.__tablename__ + 's')
+            foreign_key = '%s_id' % name
+            # print('Setting attr [%s] through fk [%s] to peer [%s] (rev=[%s]%s)'
+            #       % (name, foreign_key, peer_name, rev_name, '' if one_to_one else '*'))
+            setattr(cls,
+                    foreign_key,
+                    db.Column(db.Integer,
+                              db.ForeignKey('%s.id' % peer_name),
+                              default=default,
+                              nullable=nullable))
+            setattr(cls,
+                    name,
+                    db.relationship(peer.__name__,
+                                    backref=backref(rev_name,
+                                                    cascade=rev_cascade,
+                                                    uselist=not one_to_one),
+                                    foreign_keys=[getattr(cls, foreign_key)],
+                                    remote_side=peer.id))
+
+        @classmethod
+        def add_enum_reference(cls, peer, **kwargs):
+            kwargs.setdefault('nullable', True)
+            kwargs.setdefault('name', peer.__tablename__[5:])
+            return cls.add_reference(peer, **kwargs)
 
         @classmethod
         def columns(cls):
