@@ -1,4 +1,4 @@
-from flask_security import Security, SQLAlchemyUserDatastore, RoleMixin, UserMixin, utils
+from flask_security import Security, SQLAlchemyUserDatastore, RoleMixin, UserMixin, utils, login_user
 from sqlalchemy.ext.hybrid import hybrid_property
 
 ########################################
@@ -44,11 +44,13 @@ def bootstrap(app):  # noqa: C901  too complex
 
         @hybrid_property
         def role(self):
+            if len(self.roles) > 1:
+                raise ValueError('Cannot get single role for user who has many')
             return self.roles[0]
 
         def has_access(self, model):
             ' (dummy) returns true if user has access to model '
-            return self.company_id == model.get_company_id()
+            return true
 
         def get_permission(self, model=None):
             ' returns either ro (read only), rw (read write) or - (none)'

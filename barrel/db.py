@@ -34,20 +34,12 @@ def enable(app):  # noqa: C901
                 app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
             cls.__clean_kwargs(kwargs)
             obj = cls(**kwargs)
-            obj.before_create()
+            obj.before_create(kwargs)
             db.session.add(obj)
             if commit:
                 obj.save()
-            obj.after_create()
+            obj.after_create(kwargs)
             return obj
-
-        @classmethod
-        def get(cls, id):
-            return db.session.query(cls).get(id)
-
-        @classmethod
-        def get_or_404(cls, id):
-            return cls.query.get_or_404(id)
 
         def update(self, commit=True, report=True, **kwargs):
             if report:
@@ -57,12 +49,12 @@ def enable(app):  # noqa: C901
             self.__clean_kwargs(kwargs)
             # print 'UPDATE %s' % self
             # print '   %s' % kwargs
-            self.before_update()
-            for attr, value in kwargs.iteritems():
+            self.before_update(kwargs)
+            for attr, value in kwargs.items():
                 setattr(self, attr, value)
             if commit:
                 self.save()
-            self.after_update()
+            self.after_update(kwargs)
             return self
 
         def save(self):
@@ -72,18 +64,22 @@ def enable(app):  # noqa: C901
         def delete(self, commit=True):
             app.logger.report('Deleting %s "%s"' % (self.__class__.__name__, self))
             db.session.delete(self)
+            self.after_delete()
             return commit and db.session.commit()
 
-        def before_create(self):
+        def before_create(self, values):
             pass
 
-        def after_create(self):
+        def after_create(self, values):
             pass
 
-        def before_update(self):
+        def before_update(self, values):
             pass
 
-        def after_update(self):
+        def after_update(self, values):
+            pass
+
+        def after_delete(self):
             pass
 
     db.CRUDMixin = CRUDMixin
@@ -140,6 +136,25 @@ def enable(app):  # noqa: C901
         __abstract__ = True
 
         id = db.Column(db.Integer, primary_key=True)
+
+        @classmethod
+        def get(cls, id):
+            return db.session.query(cls).get(id)
+
+        @classmethod
+        def get_by(cls, key, val, one=True, or_none=True):
+            rec = db.session.query(cls).filter(getattr(cls, key) == val)
+            if one:
+                if or_none:
+                    return rec.one_or_none()
+                else:
+                    return rec.one()
+            else:
+                return rec.all()
+
+        @classmethod
+        def get_or_404(cls, id):
+            return db.session.query(cls).get_or_404(id)
 
         @classmethod
         def add_reference(cls, peer, name=None, rev_name=None, nullable=False, one_to_one=False,
