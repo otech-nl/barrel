@@ -1,6 +1,12 @@
+.cache
+.eggs
+.tox
 *~
 *.pyc
 *.egg
 *.egg-info
+*.log
+*.db
 dist
 build
+venv

@@ -89,7 +89,7 @@ app.Collection = function(element, modelData) {
 
     parseState: function (resp, queryParams, state, options) {
         return {
-          totalRecords: resp.num_results,
+          totalRecords: resp.num_results
         };
     }
   });
@@ -103,7 +103,7 @@ app.Collection = function(element, modelData) {
     if(filters && filters.length > 0) {
       this.collection.filters = {filters: filters};
     } else {
-      this.collection.filters = {}
+        this.collection.filters = {};
     }
 
     this.collection.fetch({
@@ -134,7 +134,7 @@ app.Collection = function(element, modelData) {
       cell: Backgrid.Cell.extend({
         className: "statusbar-cell",
         render: function () {
-          var values = this.model.get('get_status')
+          var values = this.model.get('get_status');
           var html = formatStatusbar(values);
           this.$el.empty();
           this.$el.html( html );
@@ -186,7 +186,29 @@ app.Collection = function(element, modelData) {
       }
       // console.log(column);
       column.cell = Backgrid.SelectCell.extend({
-        optionValues: column.options
+          optionValues: column.options,
+          render: function () {
+              column.cell.__super__.render.apply(this, arguments);
+              var props = {
+                  open: {
+                      "background-color": "lightgrey",
+                      color: "black"
+                  },
+                  toegekend: {
+                      "background-color": "green",
+                      color: "white"
+                  },
+                  afgewezen: {
+                      "background-color": "red",
+                      color: "white"
+                  }
+              };
+              var rawValue = this.model.get(this.column.get("name"));
+              if( rawValue in props) {
+                  this.$el.css(props[rawValue]);
+              };
+              return this;
+          }
       });
     }
     if(column.cell === "toolbar") {

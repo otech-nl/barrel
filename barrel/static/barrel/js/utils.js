@@ -69,7 +69,7 @@ function handle_period(start_element, end_element) {
                 });
             }
         }
-    })
+    });
     if(!end_element.val()) {
         end_element.datetimepicker({
             value: new Date(today.getFullYear(), today.getMonth() + 1, 1)
@@ -114,7 +114,7 @@ $(document).ready(function () {
         defaultDate: now,
         dayOfWeekStart: 1,
         weeks: true,
-    }
+    };
     $('[type=datetime]').attr('type','text').datetimepicker(options);
     // set type=text to disable default chrome datepicker
 
@@ -122,6 +122,6 @@ $(document).ready(function () {
         closeOnDateSelect: true,
         format: 'd-m-Y',
         timepicker: false,
-    })
+    });
     $('[type=date]').attr('type','text').datetimepicker(options);
 })
