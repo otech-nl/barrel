@@ -1,8 +1,8 @@
 from datetime import datetime
 import flask
 from werkzeug.routing import BaseConverter, ValidationError
-
-from . import db, forms, logger, rest, security, util  # noqa: F401, E401
+import jinja2
+from . import admin, db, forms, logger, mail, rest, security, util  # noqa: F401, E401
 
 ########################################
 
@@ -22,7 +22,6 @@ __current_app = None
 
 def init(name, cfg_obj='cfg'):
     ''' init Barrel '''
-
     global __current_app
     if __current_app:  # KLUDGE: should work with flask.current_app
         # singleton
@@ -43,6 +42,14 @@ def init(name, cfg_obj='cfg'):
     app.config['NAME'] = app.name  # for use in Jinja2 templates
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
+
+    # for debugging
+    @jinja2.contextfunction
+    def get_context(c):
+        return c
+
+    app.jinja_env.globals['context'] = get_context
+    app.jinja_env.globals['callable'] = callable
 
     # we always want a logger
     logger.enable(app)

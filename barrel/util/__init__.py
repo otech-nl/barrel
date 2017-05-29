@@ -42,3 +42,5 @@ class MoneyType(sqlalchemy.Numeric):
     def __init__(self, **kwargs):
         kwargs.setdefault('scale', 2)
         super(MoneyType, self).__init__(**kwargs)
+
+########################################

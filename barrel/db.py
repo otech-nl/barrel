@@ -84,53 +84,6 @@ def enable(app):  # noqa: C901
 
     db.CRUDMixin = CRUDMixin
 
-    class SoftDeleteMixin(CRUDMixin):
-
-        ############################################
-        # UNTESTED
-        ############################################
-
-        deleted_at = db.Column(db.DateTime, default=None)
-
-        def delete(self, commit=True, undelete=False):
-            print('############## SOFT DELETE')
-            if undelete:
-                self.deleted_at = None
-            else:
-                self.deleted_at = datetime.now()
-            for rel in self.__mapper__.relationships:
-                if 'delete' in rel._cascade:
-                    relation = str(rel).split('.')[1]
-                    relation = getattr(self, relation)
-                    for obj in relation:
-                        if isinstance(obj, SoftDeleteMixin):
-                            obj.delete(commit=False, undelete=undelete)
-                        else:
-                            obj.delete(commit=False)
-
-            return commit and db.session.commit()
-
-        @classmethod
-        def query(cls, *args, **kwargs):
-            print('############## SOFT QUERY')
-            if not args:
-                query = cls._query(cls)
-            else:
-                query = cls._query(*args)
-
-            if "include_deleted" not in kwargs or not kwargs["include_deleted"]:
-                query = query.filter(cls.deleted_at is None)
-
-            return query
-
-        @classmethod
-        def get(cls, id, include_deleted=False):
-            return cls.query(include_deleted=include_deleted)\
-                      .filter(cls.id == id)\
-                      .first()
-
-    db.SoftDeleteMixin = SoftDeleteMixin
-
     class BaseModel(db.Model):
         ''' used as super model for all other models '''
         __abstract__ = True
@@ -176,6 +129,7 @@ def enable(app):  # noqa: C901
                     name,
                     db.relationship(peer.__name__,
                                     backref=backref(rev_name,
+                                                    lazy='dynamic',
                                                     cascade=rev_cascade,
                                                     uselist=not one_to_one),
                                     foreign_keys=[getattr(cls, foreign_key)],

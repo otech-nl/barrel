@@ -42,9 +42,8 @@ def bootstrap(app):  # noqa: C901  too complex
         def __repr__(self):
             return self.email
 
-        @hybrid_property
-        def role(self):
-            if len(self.roles) > 1:
+        def get_role(self):
+            if len(self.roles.all()) > 1:
                 raise ValueError('Cannot get single role for user who has many')
             return self.roles[0]
 
@@ -78,8 +77,10 @@ def enable(app, user_class, role_class):
     db = app.db
     # create an m:n relation between users and roles
     user_roles = db.Table('user_roles',
-                          db.Column('user_id', db.Integer(), db.ForeignKey('%s.id' % user_class.__tablename__)),
-                          db.Column('role_id', db.Integer(), db.ForeignKey('%s.id' % role_class.__tablename__)))
+                          db.Column('user_id', db.Integer(),
+                                    db.ForeignKey('%s.id' % user_class.__tablename__)),
+                          db.Column('role_id', db.Integer(),
+                                    db.ForeignKey('%s.id' % role_class.__tablename__)))
     user_class.roles = db.relationship(
         role_class.__name__,
         secondary=user_roles,

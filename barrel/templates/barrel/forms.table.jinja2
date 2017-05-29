@@ -29,7 +29,7 @@
     </tr>
 {%- endmacro %}
 
-{% macro render_form(form, id="form", method="POST", action_url='', readonly=False, enctype=None) -%}
+{% macro render_form(form, id="form", method="POST", action_url='', readonly=False, enctype=None, submit_text="Opslaan") -%}
 <form method={{method}} id="{{id}}" action="{{ action_url }}" role="form"{% if enctype %} enctype={{enctype}}{% endif %}>
     {{ form.hidden_tag() if form.hidden_tag }}
     <table class="form">
@@ -60,7 +60,7 @@ $(document).ready(function() {
     <center><div id="progress"></div></center>
     <div class="buttons">
         <button type="button" id="cancel{{id}}">Annuleren</button>
-        <button type="submit" name="{{id}}">Opslaan</button>
+        <button type="submit" name="{{id}}">{{submit_text}}</button>
     </div>
 <script>
 $(document).ready(function(){
