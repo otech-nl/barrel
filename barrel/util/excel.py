@@ -29,10 +29,9 @@ class ExcelObject(object):
         for row in sheet.iter_rows():
             row_nr = int(row[0].row)
             if row_nr < first_row:
-                # print '   ignoring line %d: %s' % (row[0].row, row[0].value)
+                # print('   ignoring line %d: %s' % (row[0].row, row[0].value))
                 continue
             elif row_nr == first_row:
-                # print 'HEADERS'
                 for field in row:
                     if not field.value:
                         break
@@ -41,8 +40,9 @@ class ExcelObject(object):
                 if not key_column:
                     raise KeyError('Key column %s for %s not found' %
                                    (cls.key_column, cls.__name__))
+                # print('HEADERS: %s' % cls.field_names)
             else:
-                # print 'RECORD %d: %s' % (key_column, cls.field_names)
+                # print('RECORD %d: %s' % (key_column, cls.field_names))
                 if row[key_column].value:
                     record = cls(row)
                     records.append(record)

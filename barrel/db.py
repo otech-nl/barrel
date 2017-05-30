@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 from pprint import pformat
 from sqlalchemy.orm import backref
 
@@ -12,19 +11,19 @@ def enable(app):  # noqa: C901
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s.db' % app.name
     app.logger.info('Enabling DB with %s' % app.config['SQLALCHEMY_DATABASE_URI'])
 
-    app.db = SQLAlchemy(app)
+    app.db = SQLAlchemy(app)  # session_options={'autocommit': False, 'autoflush': False}
     db = app.db
 
     db.echo = app.config['DEBUG']
 
     class CRUDMixin(object):
+
+        delay_save = False
+
         @classmethod
         def __clean_kwargs(cls, kwargs):
             cols = cls.__dict__
-            rem = []    # columns to be removed
-            for k in kwargs:
-                if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols:
-                    rem.append(k)
+            rem = [k for k in kwargs if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols]
             for r in rem:
                 del kwargs[r]
 
@@ -36,8 +35,7 @@ def enable(app):  # noqa: C901
             obj = cls(**kwargs)
             obj.before_create(kwargs)
             db.session.add(obj)
-            if commit:
-                obj.save()
+            obj.save(commit)
             obj.after_create(kwargs)
             return obj
 
@@ -52,17 +50,18 @@ def enable(app):  # noqa: C901
             self.before_update(kwargs)
             for attr, value in kwargs.items():
                 setattr(self, attr, value)
-            if commit:
-                self.save()
+            self.save(commit)
             self.after_update(kwargs)
             return self
 
-        def save(self):
-            db.session.commit()
+        def save(self, really=True):
+            if really and not self.delay_save:
+                db.session.commit()
             return self
 
-        def delete(self, commit=True):
-            app.logger.report('Deleting %s "%s"' % (self.__class__.__name__, self))
+        def delete(self, commit=True, report=True):
+            if report:
+                app.logger.report('Deleting %s "%s"' % (self.__class__.__name__, self))
             db.session.delete(self)
             self.after_delete()
             return commit and db.session.commit()
@@ -160,10 +159,24 @@ def enable(app):  # noqa: C901
 
         @classmethod
         def get_max_id(cls):
-            return db.session.query(db.func.max(cls.id)).scalar()
+            return db.session.query(db.func.max(cls.id)).scalar() or 0
+
+        @classmethod
+        def bulk_insert(cls, new_records):
+            print('Bulk insert of %s: %s' % (cls.__name__, new_records))
+            max_id = cls.get_max_id()
+            for rec in new_records:
+                if id not in rec:
+                    max_id += 1
+                    rec['id'] = max_id
+            db.engine.execute(cls.__table__.insert(), new_records)
+            cls.commit()
 
         @staticmethod
         def commit():
+            # print('DIRTY: %s' % db.session.dirty)
+            # print('NEW: %s' % db.session.new)
+            # print('DELETED: %s' % db.session.deleted)
             db.session.commit()
 
         @staticmethod

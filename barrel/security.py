@@ -35,9 +35,13 @@ def bootstrap(app):  # noqa: C901  too complex
         def password(self):
             return self._password
 
+        @staticmethod
+        def encrypt_password(plaintext):
+            return utils.encrypt_password(plaintext)
+
         @password.setter
         def _set_password(self, plaintext):
-            self._password = utils.encrypt_password(plaintext)
+            self._password = self.encrypt_password(plaintext)
 
         def __repr__(self):
             return self.email
