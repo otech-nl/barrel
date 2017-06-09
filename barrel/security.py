@@ -1,4 +1,4 @@
-from flask_security import Security, SQLAlchemyUserDatastore, RoleMixin, UserMixin, utils, login_user
+from flask_security import Security, SQLAlchemyUserDatastore, RoleMixin, UserMixin, utils
 from sqlalchemy.ext.hybrid import hybrid_property
 
 ########################################
@@ -78,17 +78,7 @@ def bootstrap(app):  # noqa: C901  too complex
 
 def enable(app, user_class, role_class):
     app.logger.info('Enabling security')
-    db = app.db
-    # create an m:n relation between users and roles
-    user_roles = db.Table('user_roles',
-                          db.Column('user_id', db.Integer(),
-                                    db.ForeignKey('%s.id' % user_class.__tablename__)),
-                          db.Column('role_id', db.Integer(),
-                                    db.ForeignKey('%s.id' % role_class.__tablename__)))
-    user_class.roles = db.relationship(
-        role_class.__name__,
-        secondary=user_roles,
-        backref=db.backref('users', lazy='dynamic'))
+    user_class.add_cross_reference(role_class)
 
     # configure security with role and user classes
     user_datastore = SQLAlchemyUserDatastore(app.db, user_class, role_class)

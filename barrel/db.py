@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from pprint import pformat
 from sqlalchemy.orm import backref
+from sqlalchemy.ext.associationproxy import association_proxy
 
 ########################################
 
@@ -109,36 +110,69 @@ def enable(app):  # noqa: C901
             return db.session.query(cls).get_or_404(id)
 
         @classmethod
-        def add_reference(cls, peer, name=None, rev_name=None, nullable=False, one_to_one=False,
-                          rev_cascade='save-update, merge, delete', default=None):
+        def add_reference(cls, peer_cls, name=None, rev_name='', nullable=False, one_to_one=False,
+                          rev_cascade='save-update, merge, delete', default=None, add_backref=True):
             ''' bundles all the paperwork for making a relation and provides some sensible defaults '''
-            peer_name = peer.__tablename__
-            name = name or peer_name
-            rev_name = rev_name or (cls.__tablename__ if one_to_one else cls.__tablename__ + 's')
+            name = name or peer_cls.__tablename__
             foreign_key = '%s_id' % name
-            # print('Setting attr [%s] through fk [%s] to peer [%s] (rev=[%s]%s)'
-            #       % (name, foreign_key, peer_name, rev_name, '' if one_to_one else '*'))
+
+            # create foreign key
             setattr(cls,
                     foreign_key,
                     db.Column(db.Integer,
-                              db.ForeignKey('%s.id' % peer_name),
+                              db.ForeignKey('%s.id' % peer_cls.__tablename__),
                               default=default,
                               nullable=nullable))
-            setattr(cls,
-                    name,
-                    db.relationship(peer.__name__,
-                                    backref=backref(rev_name,
-                                                    lazy='dynamic',
-                                                    cascade=rev_cascade,
-                                                    uselist=not one_to_one),
-                                    foreign_keys=[getattr(cls, foreign_key)],
-                                    remote_side=peer.id))
+
+            # prepare optional relation kwarg
+            kwargs = dict()
+            if add_backref:
+                rev_name = rev_name or (cls.__tablename__ + ('' if one_to_one else 's'))
+                kwargs['backref'] = backref(rev_name,
+                                            lazy='dynamic',
+                                            cascade=rev_cascade,
+                                            uselist=not one_to_one)
+            # print('Setting %s.%s -> %s (%s%s)'
+            #       % (cls.__name__, name, peer_cls.__name__, rev_name, '' if one_to_one else '*'))
+            # create relationship
+            setattr(cls, name, db.relationship(peer_cls.__name__,
+                                               foreign_keys=[getattr(cls, foreign_key)],
+                                               remote_side=peer_cls.id,
+                                               **kwargs))
 
         @classmethod
-        def add_enum_reference(cls, peer, **kwargs):
+        def add_cross_reference(cls, peer_cls, names=None, x_names=None, x_cls=None):
+            ''' adds an m:n relation between this class and peer_cls '''
+            names = names or (cls.__tablename__, peer_cls.__tablename__)
+            x_names = x_names or (names[1] + 's', names[0] + 's')
+
+            # create cross reference table
+            x_cls = x_cls or type(cls.__name__ + peer_cls.__name__, (db.BaseModel,), {})
+            x_cls.add_reference(cls, name=names[0], add_backref=False)
+            x_cls.add_reference(peer_cls, name=names[1], add_backref=False)
+
+            # print('   cross reference: %s.%s <-> %s.%s' %
+            #       (cls.__name__, x_names[0], peer_cls.__name__, x_names[1]))
+
+            # create relationship
+            if cls == peer_cls:
+                # self-referential
+                setattr(cls, x_names[0], association_proxy(x_names[1], names[0]))
+                setattr(cls, x_names[1], association_proxy(x_names[0], names[1]))
+            else:
+                setattr(cls, x_names[0],
+                        db.relationship(
+                            peer_cls.__name__,
+                            secondary=x_cls.__tablename__,
+                            backref=db.backref(x_names[1], lazy='dynamic')))
+
+            return x_cls
+
+        @classmethod
+        def add_enum_reference(cls, peer_cls, **kwargs):
             kwargs.setdefault('nullable', True)
-            kwargs.setdefault('name', peer.__tablename__[5:])
-            return cls.add_reference(peer, **kwargs)
+            kwargs.setdefault('name', peer_cls.__tablename__[5:])
+            return cls.add_reference(peer_cls, **kwargs)
 
         @classmethod
         def columns(cls):
