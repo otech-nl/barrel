@@ -30,7 +30,8 @@ setup(name='flask_barrel',
           'begins',
           'flask-security',
           'flask-sqlalchemy==2.1',
-          'wtforms-alchemy'
+          'wtforms-alchemy',
+          'inflect'
       ],
       setup_requires=['pytest-runner'],
       tests_require=['pytest', 'behave', 'faker'],

@@ -23,7 +23,7 @@ __current_app = None
 def init(name, cfg_obj='cfg'):
     ''' init Barrel '''
     global __current_app
-    if __current_app:  # KLUDGE: should work with flask.current_app
+    if __current_app:
         # singleton
         return __current_app
 
