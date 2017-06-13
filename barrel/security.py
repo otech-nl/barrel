@@ -35,15 +35,20 @@ def bootstrap(app):  # noqa: C901  too complex
         def password(self):
             return self._password
 
+        @staticmethod
+        def encrypt_password(plaintext):
+            return utils.encrypt_password(plaintext)
+
         @password.setter
         def _set_password(self, plaintext):
-            self._password = utils.encrypt_password(plaintext)
+            self._password = self.encrypt_password(plaintext)
 
         def __repr__(self):
             return self.email
 
-        @hybrid_property
-        def role(self):
+        def get_role(self):
+            if len(self.roles.all()) > 1:
+                raise ValueError('Cannot get single role for user who has many')
             return self.roles[0]
 
         @hybrid_property
@@ -52,7 +57,7 @@ def bootstrap(app):  # noqa: C901  too complex
 
         def has_access(self, model):
             ' (dummy) returns true if user has access to model '
-            return self.company_id == model.get_company_id()
+            return true
 
         def get_permission(self, model=None):
             ' returns either ro (read only), rw (read write) or - (none)'
@@ -77,15 +82,7 @@ def bootstrap(app):  # noqa: C901  too complex
 
 def enable(app, user_class, role_class):
     app.logger.info('Enabling security')
-    db = app.db
-    # create an m:n relation between users and roles
-    user_roles = db.Table('user_roles',
-                          db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                          db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
-    user_class.roles = db.relationship(
-        'Role',
-        secondary=user_roles,
-        backref=db.backref('users', lazy='dynamic'))
+    user_class.add_cross_reference(role_class)
 
     # configure security with role and user classes
     user_datastore = SQLAlchemyUserDatastore(app.db, user_class, role_class)

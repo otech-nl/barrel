@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # coding=utf8
+from app import app
 from models import Role, User, Group
-from barrel import do
+from barrel.util import app_context
+import barrel
 import begin
 
 
 ########################################
 
-@do.app_context
+@app_context(app)
 @begin.subcommand
 def add_user(email, password, role_name, group):
     try:
@@ -31,7 +33,29 @@ def add_user(email, password, role_name, group):
 ########################################
 
 
-@do.app_context
+@app_context(app)
+@begin.subcommand
+def init():
+    ''' Initialize the database '''
+    print('Initializing')
+    barrel.db.init(app)
+
+    Role.create(name='admin')
+    Role.create(name='mod')
+    Role.create(name='user')
+
+    Group.create(
+        abbr=u'OTW',
+        name=u'OTech BV')
+
+    add_user('steets@otech', 'test123', 'admin', group=Group.get_admin_group())
+
+    return 'Database initialized successfully'
+
+########################################
+
+
+@app_context(app)
 @begin.subcommand
 def seed():
     ''' Add testing data to the database '''
@@ -49,6 +73,8 @@ def seed():
         name=u'OTech BV')
 
     add_user('steets@otech', 'test123', 'admin', group=Group.get_admin_group())
+
+    return 'Database filled successfully'
 
 ########################################
 

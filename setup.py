@@ -8,7 +8,7 @@ extensions, but with sensible defaults in place.
 from setuptools import setup
 
 setup(name='flask_barrel',
-      version='0.1',
+      version='1.3',
       description='Lock, stock, and * for your Flask app',
       classifiers=[
         'Development Status :: 3 - Alpha',
@@ -29,9 +29,13 @@ setup(name='flask_barrel',
       install_requires=[
           'begins',
           'flask-security',
-          'flask-sqlalchemy',
-          'wtforms-alchemy'
+          'flask-sqlalchemy==2.1',
+          'wtforms-alchemy',
+          'inflect'
       ],
+      setup_requires=['pytest-runner'],
+      tests_require=['pytest', 'behave', 'faker'],
+      test_suite='tests',
       include_package_data=True,
       platforms='any',
       zip_safe=False)

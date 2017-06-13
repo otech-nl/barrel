@@ -72,7 +72,7 @@ class BarrelForms(object):
                     self.app.logger.flash(self.messages['created'], 'success')
             except SQLAlchemyError as e:
                 self.app.db.session.rollback()
-                self.app.logger.flash(self.messages['error'] % e.message, 'error', e)
+                self.app.logger.flash(self.messages['error'] % e, 'error')
         else:
             if request.method == 'POST':
                 self.app.logger.flash(self.messages['illegal'], 'error', form.errors)

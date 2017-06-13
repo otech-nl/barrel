@@ -1,8 +1,8 @@
 from datetime import datetime
-from flask import Flask, Blueprint
+import flask
 from werkzeug.routing import BaseConverter, ValidationError
-
-from . import db, forms, logger, rest, security, util  # noqa: F401, E401
+import jinja2
+from . import admin, db, forms, logger, mail, rest, security, util  # noqa: F401, E401
 
 ########################################
 
@@ -14,19 +14,27 @@ try:
 except NameError:
     pass  # python3
 
+
+__current_app = None
+
 ########################################
 
 
 def init(name, cfg_obj='cfg'):
     ''' init Barrel '''
-    class Barrel(Blueprint):
+    global __current_app
+    if __current_app:
+        # singleton
+        return __current_app
+
+    class Barrel(flask.Blueprint):
         def __init__(self, app):
-            Blueprint.__init__(self, __name__, __name__,
-                               template_folder='templates',
-                               static_folder='static/barrel')
+            flask.Blueprint.__init__(self, __name__, __name__,
+                                     template_folder='templates',
+                                     static_folder='static/barrel')
 
     # create and configure Flask app
-    app = Flask(name)
+    __current_app = app = flask.Flask(name)
     app.register_blueprint(Barrel(app))
     app.config.from_object(cfg_obj)
 
@@ -34,6 +42,14 @@ def init(name, cfg_obj='cfg'):
     app.config['NAME'] = app.name  # for use in Jinja2 templates
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
+
+    # for debugging
+    @jinja2.contextfunction
+    def get_context(c):
+        return c
+
+    app.jinja_env.globals['context'] = get_context
+    app.jinja_env.globals['callable'] = callable
 
     # we always want a logger
     logger.enable(app)

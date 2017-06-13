@@ -1,5 +1,24 @@
 from wtforms import fields, widgets
+import functools
 import sqlalchemy
+
+########################################
+
+
+class app_context(object):
+    ''' decorator to add app.app_context '''
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, f):
+        @functools.wraps(f)
+        def decorated_function(*args, **kwargs):
+            with self.app.app_context():
+                return f(*args, **kwargs)
+        return decorated_function
+
+########################################
 
 
 class MoneyWidget(widgets.Input):
@@ -23,3 +42,5 @@ class MoneyType(sqlalchemy.Numeric):
     def __init__(self, **kwargs):
         kwargs.setdefault('scale', 2)
         super(MoneyType, self).__init__(**kwargs)
+
+########################################

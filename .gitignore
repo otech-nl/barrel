@@ -1,6 +1,12 @@
-*~
-*.pyc
+*.db
 *.egg
 *.egg-info
-dist
+*.log
+*.pyc
+*~
+.cache
+.eggs
+.tox
 build
+dist
+venv
