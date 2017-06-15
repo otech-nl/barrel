@@ -44,3 +44,27 @@ class MoneyType(sqlalchemy.Numeric):
         super(MoneyType, self).__init__(**kwargs)
 
 ########################################
+
+
+class PercentageWidget(widgets.Input):
+
+    def __init__(self):
+        self.input_type = 'number'
+
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('step', 0.01)
+        return ('<div class="input-group">%s<span class="input-group-addon">%%</span></div>'
+                % (super(PercentageWidget, self).__call__(field, **kwargs)))
+
+
+class PercentageField(fields.Field):
+    widget = PercentageWidget
+
+
+class PercentageType(sqlalchemy.Numeric):
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('scale', 2)
+        super(PercentageType, self).__init__(**kwargs)
+
+########################################

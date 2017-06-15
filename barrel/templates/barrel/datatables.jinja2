@@ -1,12 +1,14 @@
 {% from "barrel/forms.bootstrap.jinja2" import form_modal with context %}
 {% from "barrel/bootstrap.jinja2" import symbol %}
 
-{% macro datatable(api,
-  columns, form=None, rows=None, show_form=False, allow_add=True, model=None, readonly=False) %}
+{% macro datatable(api, columns, model=None, form=None, rows=None,
+  title=None, show_form=False, allow_add=True, readonly=False, intro='') %}
   {% set basic = rows is iterable and rows is not string %}
   {% set columns = ['id'] + columns %}
-  <h2>{{api | capitalize}}-overzicht</h2>
-  <table id="{{api}}" class="display table table-striped" cellspacing="0" width="100%">
+  {% set title = title or api %}
+  <h2>{{title | capitalize}}-overzicht</h2>
+  {{intro}}
+  <table id="{{title}}" class="display table table-striped" cellspacing="0" width="100%">
     <thead><tr>{% for col in columns %}<th>{{col}}</th>{% endfor %}</tr></thead>
     <tbody>
       {% if basic %}
@@ -21,13 +23,13 @@
   {% set type = "basic" if basic else "json" %}
   <script>
     $(document).ready(function() {
-    {{type}}_datatable("{{api}}", {{columns | tojson}})
+    {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}})
     });
   </script>
   {% if allow_add and not readonly %}
   <a class="btn btn-primary" href="{{url_for(api, id=0, **kwargs)}}">{{symbol('plus')}} Voeg {{api}} toe</a>
   {% endif %}
   {% if form %}
-    {{ form_modal(form, api, show_form, model=model, readonly=readonly) }}
+    {{ form_modal(form, api, show_form, model=model, readonly=readonly, title=title) }}
   {% endif %}
 {% endmacro  %}

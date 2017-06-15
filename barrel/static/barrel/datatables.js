@@ -5,7 +5,7 @@ function form_modal_open(element, id) {
     $('#'+element+'Modal').modal('show');
 }
 
-function init_datatable(element, column_names, user_options) {
+function init_datatable(column_names, user_options) {
     var options = {
         // map column names
         columns: column_names.map(function(el) {
@@ -45,8 +45,8 @@ function init_datatable(element, column_names, user_options) {
     return options;
 }
 
-function create_datatable(element, options, register_click) {
-    var table = $('table#'+element).DataTable(options);
+function create_datatable(table_id, element, options, register_click) {
+    var table = $('table#'+table_id).DataTable(options);
 
     if(register_click) {
         table.on('click', 'tbody td', function() {
@@ -58,19 +58,19 @@ function create_datatable(element, options, register_click) {
     return table;
 }
 
-function json_datatable(element, column_names) {
-    var options = init_datatable(element, column_names, {
+function json_datatable(table_id, element, column_names) {
+    var options = init_datatable(column_names, {
         serverSide: true,
         processing: true,
         ajax: {
             url: '/api/'+element
         }
     });
-    return create_datatable(element, options, true);
+    return create_datatable(table_id, element, options, true);
 }
 
-function basic_datatable(element, column_names, user_options, disable_click) {
-    var options = init_datatable(element, column_names, {
+function basic_datatable(table_id, element, column_names, user_options, disable_click) {
+    var options = init_datatable(column_names, {
         searching: false,
         paging: false,
         lengthChange: false,
@@ -78,5 +78,5 @@ function basic_datatable(element, column_names, user_options, disable_click) {
         sorting: []
     });
     Object.assign(options, user_options);
-    return create_datatable(element, options, !disable_click);
+    return create_datatable(table_id, element, options, !disable_click);
 }

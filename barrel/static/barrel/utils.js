@@ -76,6 +76,21 @@ function handle_period(start_element, end_element) {
     }
 }
 
+function calculate_product(el1, el2, prod) {
+    el1 = $(el1);
+    el2 = $(el2);
+    prod = $(prod);
+    function calculate() {
+        prod.val(el1.val() * el2.val());
+    }
+    function watch(el) {
+        el.keyup(calculate);
+        el.change(calculate);
+    }
+    watch(el1);
+    watch(el2);
+}
+
 function formatStatusbar(values) {
     var colors = {openstaand: 'firebrick', ingeschreven: 'orange', toegekend: 'green', sum: 'black'};
     function statusbar_cell(size, cls, value) {
@@ -100,27 +115,3 @@ function formatStatusbar(values) {
     html.push(statusbar_cell(20, 'sum', sum));
     return '<table style="width: 150pt"><tr>'+html.join('')+'</tr></table>';
 }
-
-$(document).ready(function () {
-    var now = new Date();
-    var options = {
-        format: 'd-m-Y H:i',
-        formatDate:'d-m-Y',
-        formatTime:'H:i',
-        lang: 'nl',
-        // mask: true,
-        defaultTime: now,
-        defaultDate: now,
-        dayOfWeekStart: 1,
-        weeks: true
-    };
-    $('[type=datetime]').attr('type','text').datetimepicker(options);
-    // set type=text to disable default chrome datepicker
-
-    $.extend(options, {
-        closeOnDateSelect: true,
-        format: 'd-m-Y',
-        timepicker: false
-    });
-    $('[type=date]').attr('type','text').datetimepicker(options);
-});

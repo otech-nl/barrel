@@ -1,7 +1,8 @@
 {% from "barrel/macros.jinja2" import menu_items %}
 
-{% macro symbol(name) -%}
-  <span class="glyphicon glyphicon-{{name}}" aria-hidden="true"></span>
+{% macro symbol(name, tooltip=None) -%}
+  {% set tooltip = tooltip or name %}
+  <span class="glyphicon glyphicon-{{name}}" aria-hidden="true" data-toggle="tooltip" title={{tooltip}}></span>
 {%- endmacro %}
 
 {% macro input_symbol(name) -%}

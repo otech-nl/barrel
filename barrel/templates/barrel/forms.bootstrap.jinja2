@@ -1,6 +1,14 @@
 {% from "barrel/forms.jinja2" import render_field %}
 {% from "barrel/bootstrap.jinja2" import symbol %}
 
+
+{% macro button(text, url, glyphicon=None) %}
+  <a class="btn btn-primary" href="{{ url }}">
+    {% if glyphicon %}{{symbol(glyphicon)}}{% endif %} {{text}}
+  </a>
+{% endmacro %}
+
+
 {% macro render_row(fields, fill=False, readonly=[], show_labels=true) -%}
   <div class="row">
     {% if fields is iterable %}
@@ -12,6 +20,7 @@
     {% endif %}
   </div>
 {%- endmacro %}
+
 
 {% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[], model=None) -%}
   <form method={{method}} id="{{id}}" action="{{ action_url }}" role="form"{% if enctype %} enctype={{enctype}}{% endif %}>
@@ -40,11 +49,11 @@
     {% else %}
       <center><div id="progress"></div></center>
       <div class="buttons">
-        <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign')}} Verwerken</button>
+        <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign', "submit")}} Verwerken</button>
         {% if model %}
           <a class='btn btn-danger' onclick='delete_item()'>{{symbol("remove")}} Verwijderen</a>
         {% endif %}
-        {% for button in buttons %}{{button}}{% endfor %}
+        {% for b in buttons %}{{button(*b)}}{% endfor %}
       </div>
       <script>
         $(document).ready(function(){
@@ -64,8 +73,10 @@
   </form>
 {%- endmacro %}
 
-{% macro form_modal(form, api, show, model=None, readonly=false) %}
+
+{% macro form_modal(form, api, show, model=None, readonly=false, title=None) %}
   {% set id = api+"Modal" %}
+  {% set title = title or api %}
   <div class="modal fade" id="{{id}}" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -73,7 +84,7 @@
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
-          <h2 class="modal-title">{{api | capitalize}} bewerken</h2>
+          <h2 class="modal-title">{{title | capitalize}} bewerken</h2>
         </div>
         <div class="modal-body">
           {% include "forms/"+api+".jinja2" %}

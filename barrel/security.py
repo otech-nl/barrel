@@ -46,18 +46,18 @@ def bootstrap(app):  # noqa: C901  too complex
         def __repr__(self):
             return self.email
 
-        def get_role(self):
-            if len(self.roles.all()) > 1:
-                raise ValueError('Cannot get single role for user who has many')
-            return self.roles[0]
+        # def get_role(self):
+        #     if len(self.roles.all()) > 1:
+        #         raise ValueError('Cannot get single role for user who has many')
+        #     return self.roles[0]
 
-        @hybrid_property
-        def role_id(self):
-            return self.role.id
+        # @hybrid_property
+        # def role_id(self):
+        #     return self.role.id
 
         def has_access(self, model):
             ' (dummy) returns true if user has access to model '
-            return true
+            return True
 
         def get_permission(self, model=None):
             ' returns either ro (read only), rw (read write) or - (none)'

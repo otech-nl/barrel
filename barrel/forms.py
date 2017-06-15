@@ -19,7 +19,8 @@ class BarrelForms(object):
 
     ########################################
 
-    def __init__(self, app, messages=None, lang='en', date_format=None, datetime_format=None):
+    def __init__(self, app, messages=None, lang='en',
+                 date_format='%Y-%m-%d', datetime_format='%Y-%m-%d %H:%M'):
         self.app = app
         self.messages = messages or dict(
             nl=dict(
@@ -102,8 +103,8 @@ class BarrelForms(object):
         api = model_class.get_api()
 
         show_form = (id == 0)
-        if api in request.form:  # update
-            form = self.handle_form(model_class, form_class, model=model)
+        if api in request.form:  # submit
+            form = self.handle_form(model_class, form_class, model=model, **kwargs)
             show_form = bool(form.errors)
         elif model:  # edit
             form = form_class(None, obj=model)

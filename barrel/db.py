@@ -1,13 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from pprint import pformat
 from sqlalchemy.orm import backref
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.inspection import inspect
 import inflect
 
 ########################################
 
 
-def enable(app):  # noqa: C901
+def enable(app, debug=False):  # noqa: C901
 
     if app.config['SQLALCHEMY_DATABASE_URI'] == 'default':
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s.db' % app.name
@@ -18,6 +18,11 @@ def enable(app):  # noqa: C901
     db = app.db
 
     db.echo = app.config['DEBUG']
+
+    def log(msg):
+        pass
+    # for debugging
+    # log = app.logger.report
 
     class CRUDMixin(object):
 
@@ -33,9 +38,9 @@ def enable(app):  # noqa: C901
 
         @classmethod
         def create(cls, commit=True, report=True, **kwargs):
+            cls.__clean_kwargs(kwargs)
             if report:
                 app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
-            cls.__clean_kwargs(kwargs)
             obj = cls(**kwargs)
             obj.before_create(kwargs)
             db.session.add(obj)
@@ -44,13 +49,13 @@ def enable(app):  # noqa: C901
             return obj
 
         def update(self, commit=True, report=True, **kwargs):
+            self.__clean_kwargs(kwargs)
             if report:
                 app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__,
                                                             self,
                                                             pformat(kwargs)))
-            self.__clean_kwargs(kwargs)
-            # print 'UPDATE %s' % self
-            # print '   %s' % kwargs
+            log('UPDATE %s' % self)
+            log('   %s' % kwargs)
             self.before_update(kwargs)
             for attr, value in kwargs.items():
                 setattr(self, attr, value)
@@ -101,13 +106,6 @@ def enable(app):  # noqa: C901
     class NamingMixin(object):
 
         @classmethod
-        def columns(cls):
-            return cls.__table__.columns.keys()
-
-        def to_dict(self):
-            return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-        @classmethod
         def get_api(cls):
             return cls.__tablename__
 
@@ -115,8 +113,30 @@ def enable(app):  # noqa: C901
         def get_plural(cls):
             return app.inflect.plural(cls.get_api())
 
-
     db.NamingMixin = NamingMixin
+
+    class IntrospectionMixin(object):
+
+        @classmethod
+        def columns(cls, skip_pk=True, remove=''):
+            remove = remove.split()
+            insp = inspect(cls)
+            if skip_pk:
+                pk = [p.key for p in insp.primary_key]
+                remove += pk
+            cols = set(insp.columns.keys()) - set(remove)
+            return cols
+
+        @classmethod
+        def relationships(cls, remove=''):
+            remove = remove.split()
+            cols = set(inspect(cls).relationships) - set(remove)
+            return cols
+
+        def to_dict(self, remove=''):
+            return {c: getattr(self, c) for c in self.columns(remove=remove)}
+
+    db.IntrospectionMixin = IntrospectionMixin
 
     class OperationsMixin(object):
 
@@ -151,76 +171,111 @@ def enable(app):  # noqa: C901
 
         @staticmethod
         def commit():
-            # print('DIRTY: %s' % db.session.dirty)
-            # print('NEW: %s' % db.session.new)
-            # print('DELETED: %s' % db.session.deleted)
+            log('DIRTY: %s' % db.session.dirty)
+            log('NEW: %s' % db.session.new)
+            log('DELETED: %s' % db.session.deleted)
             db.session.commit()
 
         @staticmethod
         def rollback():
             db.session.rollback()
 
+        @classmethod
+        def others(cls, id):
+            return cls.query.filter(cls.id != id)
+
     db.OperationsMixin = OperationsMixin
 
-    class BaseModel(db.Model, NamingMixin):
+    class BaseModel(db.Model, CRUDMixin, NamingMixin):
         ''' used as super model for all other models '''
         __abstract__ = True
 
         id = db.Column(db.Integer, primary_key=True)
 
         @classmethod
-        def make_supermodel(cls, identities=[]):
-            print('Making supermodel %s: %s' % (cls.__name__, identities))
-            cls.identities = identities
-            cls.discrimator = db.Column(db.Enum(*cls.identities))
-            cls.__mapper_args__ = {
-                'polymorphic_identity': 'base',
-                'polymorphic_on': 'discrimator',
-                'with_polymorphic': '*'
-            }
+        def derive_polymorphic(basemodel, cls, identities):
+            ''' returns a polymorphic subclass of cls and basemodel '''
+            log('Making polymorphic %s from %s: %s'
+                % (cls.__name__, basemodel.__name__, identities))
+            identities_list = identities.split()
+
+            # make cls polymorphic
+            class Polymorphic(cls):
+                identities = identities_list
+                _identity = db.Column(db.Enum(*identities_list))
+                __mapper_args__ = dict(
+                    polymorphic_identity=identities_list[0],
+                    polymorphic_on=_identity,
+                    with_polymorphic='*'
+                )
+
+            # now create the actual subclass with basemodel so we can preserve the cls name
+            return type(cls.__name__, (Polymorphic, basemodel), {})
 
         @classmethod
         def derive_model(cls, derived_cls, identity=None, single_table=True):
-            print('Derive model %s < %s' % (derived_cls.__name__, cls.__name__))
+            log('Derive model %s < %s' % (derived_cls.__name__, cls.__name__))
             attrs = dict(__mapper_args__={'polymorphic_identity': identity or derived_cls.__name__})
-            if single_table:
-                print('   single table: %s.id' % cls.__tablename__)
+            if single_table:  # as opposed to joined table
+                log('   single table: %s.id' % cls.__tablename__)
                 attrs['id'] = db.Column(db.Integer,
-                                         db.ForeignKey('%s.id' % cls.__tablename__),
-                                         primary_key=True)
+                                        db.ForeignKey('%s.id' % cls.__tablename__),
+                                        primary_key=True)
             derived_cls = type(derived_cls.__name__, (derived_cls, cls), attrs)
             return derived_cls
 
         @classmethod
-        def add_reference(cls, peer_cls, name=None, rev_name='', nullable=False, one_to_one=False,
-                          rev_cascade='save-update, merge, delete', default=None, add_backref=True):
-            ''' relation scaffolding with sensible defaults '''
-            name = name or peer_cls.__tablename__
+        def _add_foreign_key(cls, peer_cls, name, nullable=False, default=None):
             foreign_key = '%s_id' % name
-
-            # create foreign key
             setattr(cls,
                     foreign_key,
                     db.Column(db.Integer,
                               db.ForeignKey('%s.id' % peer_cls.__tablename__),
                               default=default,
                               nullable=nullable))
+            return foreign_key
 
-            # prepare optional relation kwarg
-            kwargs = dict()
-            if add_backref:
-                rev_name = rev_name or (cls.get_api() if one_to_one else cls.get_plural())
-                kwargs['backref'] = backref(rev_name,
-                                            lazy='dynamic',
-                                            cascade=rev_cascade,
-                                            uselist=not one_to_one)
-            print('Referencing %s.%s -> %s (%s%s)'
-                  % (cls.__name__, name, peer_cls.__name__, rev_name, '' if one_to_one else '*'))
-            # create relationship
+        @classmethod
+        def _add_relationship(cls, peer_cls, name, foreign_key, **kwargs):
+            log('Referencing %s.%s -> %s'
+                % (cls.__name__, name, peer_cls.__name__))
             setattr(cls, name, db.relationship(peer_cls.__name__,
                                                foreign_keys=[getattr(cls, foreign_key)],
                                                remote_side=peer_cls.id,
                                                **kwargs))
+
+        @classmethod
+        def add_reference(cls, peer_cls, name=None, rev_name='', nullable=False, default=None,
+                          rev_cascade='save-update, merge, delete', add_backref=True):
+            ''' create 1:n relation '''
+            name = name or peer_cls.__tablename__
+            foreign_key = cls._add_foreign_key(peer_cls, name, nullable, default)
+
+            # prepare optional relation kwarg
+            kwargs = dict()
+            if add_backref:
+                rev_name = rev_name or cls.get_plural()
+                kwargs['backref'] = backref(rev_name,
+                                            lazy='dynamic',
+                                            cascade=rev_cascade)
+            # create relationship
+            cls._add_relationship(peer_cls, name, foreign_key, **kwargs)
+
+        @classmethod
+        def add_single_reference(cls, peer_cls, name=None, rev_name='', nullable=False, default=None,
+                                 rev_cascade='save-update, merge, delete', add_backref=True):
+            ''' create 1:1 relation '''
+            name = name or peer_cls.__tablename__
+            foreign_key = cls._add_foreign_key(peer_cls, name, nullable, default)
+
+            # prepare optional relation kwarg
+            kwargs = dict()
+            if add_backref:
+                rev_name = rev_name or cls.get_api()
+                kwargs['backref'] = backref(rev_name,
+                                            cascade=rev_cascade,
+                                            uselist=False)
+            cls._add_relationship(peer_cls, name, foreign_key, **kwargs)
 
         @classmethod
         def add_cross_reference(cls, peer_cls, names=None, x_names=None, x_cls=None):
@@ -233,20 +288,23 @@ def enable(app):  # noqa: C901
             x_cls.add_reference(cls, name=names[0], add_backref=False)
             x_cls.add_reference(peer_cls, name=names[1], add_backref=False)
 
-            print('   cross reference: %s.%s <-> %s.%s' %
-                  (cls.__name__, x_names[0], peer_cls.__name__, x_names[1]))
+            log('   cross reference: %s.%s <-> %s.%s' %
+                (cls.__name__, x_names[0], peer_cls.__name__, x_names[1]))
 
             # create relationship
+            kwargs = dict()
             if cls == peer_cls:
                 # self-referential
-                setattr(cls, x_names[0], association_proxy(x_names[1], names[0]))
-                setattr(cls, x_names[1], association_proxy(x_names[0], names[1]))
-            else:
-                setattr(cls, x_names[0],
-                        db.relationship(
-                            peer_cls.__name__,
-                            secondary=x_cls.__tablename__,
-                            backref=db.backref(x_names[1], lazy='dynamic')))
+                # setattr(cls, x_names[0], association_proxy(x_names[1], names[0]))
+                # setattr(cls, x_names[1], association_proxy(x_names[0], names[1]))
+                kwargs['primaryjoin'] = '%s.id==%s.c.%s_id' % (cls.__name__, x_cls.__tablename__, names[0])
+                kwargs['secondaryjoin'] = '%s.id==%s.c.%s_id' % (cls.__name__, x_cls.__tablename__, names[1])
+            setattr(cls, x_names[0],
+                    db.relationship(
+                        peer_cls.__name__,
+                        secondary=x_cls.__tablename__,
+                        backref=db.backref(x_names[1], lazy='dynamic'),
+                        **kwargs))
 
             return x_cls
 
@@ -263,10 +321,9 @@ def enable(app):  # noqa: C901
 ########################################
 
 
-def supermodel(identities=None):
+def extend_polymorphic(basemodel, identities):
     def class_decorator(cls):
-        cls.make_supermodel(identities)
-        return cls
+        return basemodel.derive_polymorphic(cls, identities)
     return class_decorator
 
 
@@ -281,6 +338,14 @@ def add_reference(peer_cls, **kwargs):
     ''' decorator for to cls.add_reference '''
     def class_decorator(cls):
         cls.add_reference(peer_cls, **kwargs)
+        return cls
+    return class_decorator
+
+
+def add_single_reference(peer_cls, **kwargs):
+    ''' decorator for to cls.add_single_reference '''
+    def class_decorator(cls):
+        cls.add_single_reference(peer_cls, **kwargs)
         return cls
     return class_decorator
 
