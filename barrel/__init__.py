@@ -1,3 +1,4 @@
+""" The main entry point to Flask Barrel. """
 from datetime import datetime
 import flask
 from werkzeug.routing import BaseConverter, ValidationError
@@ -21,7 +22,17 @@ __current_app = None
 
 
 def init(name, cfg_obj='cfg'):
-    ''' init Barrel '''
+    """ Must be called before anything else.
+
+    Also enables the database (through :py:func:`db.enable`) if configured
+    and logging (through :py:func:`logger.enable`).
+
+    Args:
+        name (string): name for your app. Is also used as database and logfile name.
+        cfg_obj (string): name of config file (without py extension)
+    Returns:
+        your Flask app
+    """
     global __current_app
     if __current_app:
         # singleton
@@ -60,7 +71,7 @@ def init(name, cfg_obj='cfg'):
 
     # enable transparent dates in routes
     class DateConverter(BaseConverter):
-        """Extracts a ISO8601 date from the path and validates it."""
+        """ Extracts a ISO8601 date from the path and validates it. """
 
         regex = r'\d{4}-\d{1,2}-\d{1,2}'
 

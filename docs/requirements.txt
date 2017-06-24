@@ -1,0 +1,5 @@
+-e ..
+sphinx
+flask-admin
+openpyxl
+flask-datatables

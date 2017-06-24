@@ -53,7 +53,7 @@
         {% if model %}
           <a class='btn btn-danger' onclick='delete_item()'>{{symbol("remove")}} Verwijderen</a>
         {% endif %}
-        {% for b in buttons %}{{button(*b)}}{% endfor %}
+        {% for b in buttons %}{{button(b)}}{% endfor %}
       </div>
       <script>
         $(document).ready(function(){

@@ -1,3 +1,4 @@
+""" Wrapper around Flask-SQLAlchemy and friends """
 from flask_sqlalchemy import SQLAlchemy
 from pprint import pformat
 from sqlalchemy.orm import backref
@@ -6,14 +7,278 @@ import inflect
 
 ########################################
 
+class NamingMixin(object):
+    """ Provide some convenient names for models. """
+
+    @classmethod
+    def get_api(cls):
+        """ return the name of the API
+
+        Returns:
+            Table name by default, but may be overridden.
+        """
+        return cls.__tablename__
+
+    @classmethod
+    def get_plural(cls):
+        """ return the plural form of the API name """
+        return app.inflect.plural(cls.get_api())
+
+class IntrospectionMixin(object):
+    """ access to meta data about a model
+
+    Available as app.db.Introspectionmixin
+    """
+
+    @classmethod
+    def columns(cls, skip_pk=True, remove=''):
+        """ get column names
+
+        Args:
+            skip_pk (boolean): if True, ignore primary key columns
+            remove (string): names of columns to ignore
+        Returns:
+            list of column names (strings)
+        """
+        remove = remove.split()
+        insp = inspect(cls)
+        if skip_pk:
+            pk = [p.key for p in insp.primary_key]
+            remove += pk
+        cols = set(insp.columns.keys()) - set(remove)
+        return cols
+
+    @classmethod
+    def relationships(cls, remove=''):
+        """ get relationship names
+
+        Args:
+            remove (string): names of relationships to ignore
+        Returns:
+            list of relationship names (strings)
+        """
+        remove = remove.split()
+        cols = set(inspect(cls).relationships) - set(remove)
+        return cols
+
+    def to_dict(self, remove=''):
+        """ convert model to dictionary
+
+        Only basic columns are included (relationships are ignored),
+        so you get `relation_id` and *not* `relation`/
+
+        Args:
+            remove (string): names of columns to ignore
+        Returns:
+            dict of column values
+        """
+        return {c: getattr(self, c) for c in self.columns(remove=remove)}
+
+
+class __DBMixin(object):
+    db = None
+
+
+class CRUDMixin(__DBMixin):
+    """ provide Create, Read, Update and Delete (CRUD) methods
+
+    Available as app.db.CRUDmixin.
+    """
+    delay_save = False  # only commit when explicitely instructed
+    logger = None
+
+    @classmethod
+    def __clean_kwargs(cls, kwargs):
+        """ remove all keyword arguments that are not valid CRUD arguments"""
+        cols = cls.__dict__
+        rem = [k for k in kwargs
+                if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols]
+        for r in rem:
+            del kwargs[r]
+
+    @classmethod
+    def create(cls, commit=True, report=True, **kwargs):
+        """ create an object of this class
+
+        Calls before_create and after_create just before and after committing the new object.
+        Override these to change create behavior.
+
+        Args:
+            commit (boolean): write to database
+            report (boolean): log creation
+            kwargs: keyword arguments to be forwarded to class constructor after cleaning
+        Returns:
+            created object
+        """
+        cls.__clean_kwargs(kwargs)
+        if report:
+            cls.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
+        obj = cls(**kwargs)
+        obj.before_create(kwargs)
+        cls.db.session.add(obj)
+        obj.save(commit)
+        obj.after_create(kwargs)
+        return obj
+
+    def update(self, commit=True, report=True, **kwargs):
+        """ update an object
+
+        Calls before_update just before updating the object and after_update just after
+        committing the object. Override these to change update behavior.
+
+        Args:
+            commit (boolean): write to database
+            report (boolean): log update
+            kwargs: keyword arguments to be updated after cleaning
+        Returns:
+            updated object
+        """
+        self.__clean_kwargs(kwargs)
+        if report:
+            self.logger.report('Updating %s "%s": %s' % (self.__class__.__name__,
+                                                        self,
+                                                        pformat(kwargs)))
+        log('UPDATE %s' % self)
+        log('   %s' % kwargs)
+        self.before_update(kwargs)
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+        self.save(commit)
+        self.after_update(kwargs)
+        return self
+
+    def save(self, really=True):
+        """ commit session if delay_save is False
+
+        Args:
+            really (boolean): only commit if really is True
+        Returns:
+            object
+        """
+        if really and not self.delay_save:
+            self.db.session.commit()
+        return self
+
+    def delete(self, commit=True, report=True):
+        """ delete an object
+
+        Calls after_delete just after deleting the object and just before committing the session.
+        Override these to change update behavior.
+
+        Args:
+            commit (boolean): write to database
+            report (boolean): log deletion
+        Returns:
+            True is committing, False otherwise.
+        """
+        if report:
+            self.logger.report('Deleting %s "%s"' % (self.__class__.__name__, self))
+        self.db.session.delete(self)
+        self.after_delete()
+        return commit and self.db.session.commit()
+
+    def before_create(self, values):
+        """ called just before creation """
+        pass
+
+    def after_create(self, values):
+        """ called just after creation """
+        pass
+
+    def before_update(self, values):
+        """ called just before update """
+        pass
+
+    def after_update(self, values):
+        """ called just after update """
+        pass
+
+    def after_delete(self):
+        """ called just after delete """
+        pass
+
+    @classmethod
+    def bulk_insert(cls, new_records):
+        """ efficiently create a batch of objects
+        Args:
+            new_records (list of dicts): values for new objects
+        """
+        print('Bulk insert of %s: %s' % (cls.__name__, new_records))
+        max_id = cls.get_max_id()
+        for rec in new_records:
+            if id not in rec:
+                max_id += 1
+                rec['id'] = max_id
+        self.db.engine.execute(cls.__table__.insert(), new_records)
+        cls.commit()
+
+
+class OperationsMixin(__DBMixin):
+
+    @classmethod
+    def get(cls, id):
+        return cls.db.session.query(cls).get(id)
+
+    @classmethod
+    def get_by(cls, key, val, one=True, or_none=True):
+        rec = cls.db.session.query(cls).filter(getattr(cls, key) == val)
+        if one:
+            if or_none:
+                return rec.one_or_none()
+            else:
+                return rec.one()
+        else:
+            return rec.all()
+
+    @classmethod
+    def get_or_404(cls, id):
+        return cls.db.session.query(cls).get_or_404(id)
+
+    @classmethod
+    def from_form(cls, form):
+        obj = cls()
+        form.populate_obj(obj)
+        return obj
+
+    @classmethod
+    def get_max_id(cls):
+        return cls.db.session.query(cls.db.func.max(cls.id)).scalar() or 0
+
+    @classmethod
+    def commit(cls):
+        log('DIRTY: %s' % cls.db.session.dirty)
+        log('NEW: %s' % cls.db.session.new)
+        log('DELETED: %s' % cls.db.session.deleted)
+        cls.db.session.commit()
+
+    @classmethod
+    def rollback(cls):
+        cls.db.session.rollback()
+
+    @classmethod
+    def others(cls, id):
+        return cls.query.filter(cls.id != id)
+
 
 def enable(app, debug=False):  # noqa: C901
+    """ Enable this module.
 
+    Available through app.db.
+    Provides app.db.BaseModel with should be used as superclass by all models.
+
+    Args:
+        app (Flask app)
+        debug (boolean): if true, logs extra debugging information
+    """
     if app.config['SQLALCHEMY_DATABASE_URI'] == 'default':
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s.db' % app.name
     app.logger.info('Enabling DB with %s' % app.config['SQLALCHEMY_DATABASE_URI'])
 
+
     app.db = SQLAlchemy(app)  # session_options={'autocommit': False, 'autoflush': False}
+    app.NamingMixin = NamingMixin
+    app.IntrospectionMixin = IntrospectionMixin
+
     app.inflect = inflect.engine()
     db = app.db
 
@@ -24,177 +289,23 @@ def enable(app, debug=False):  # noqa: C901
     # for debugging
     # log = app.logger.report
 
-    class CRUDMixin(object):
-
-        delay_save = False
-
-        @classmethod
-        def __clean_kwargs(cls, kwargs):
-            cols = cls.__dict__
-            rem = [k for k in kwargs
-                   if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols]
-            for r in rem:
-                del kwargs[r]
-
-        @classmethod
-        def create(cls, commit=True, report=True, **kwargs):
-            cls.__clean_kwargs(kwargs)
-            if report:
-                app.logger.report('Creating %s: %s' % (cls.__name__, pformat(kwargs)))
-            obj = cls(**kwargs)
-            obj.before_create(kwargs)
-            db.session.add(obj)
-            obj.save(commit)
-            obj.after_create(kwargs)
-            return obj
-
-        def update(self, commit=True, report=True, **kwargs):
-            self.__clean_kwargs(kwargs)
-            if report:
-                app.logger.report('Updating %s "%s": %s' % (self.__class__.__name__,
-                                                            self,
-                                                            pformat(kwargs)))
-            log('UPDATE %s' % self)
-            log('   %s' % kwargs)
-            self.before_update(kwargs)
-            for attr, value in kwargs.items():
-                setattr(self, attr, value)
-            self.save(commit)
-            self.after_update(kwargs)
-            return self
-
-        def save(self, really=True):
-            if really and not self.delay_save:
-                db.session.commit()
-            return self
-
-        def delete(self, commit=True, report=True):
-            if report:
-                app.logger.report('Deleting %s "%s"' % (self.__class__.__name__, self))
-            db.session.delete(self)
-            self.after_delete()
-            return commit and db.session.commit()
-
-        def before_create(self, values):
-            pass
-
-        def after_create(self, values):
-            pass
-
-        def before_update(self, values):
-            pass
-
-        def after_update(self, values):
-            pass
-
-        def after_delete(self):
-            pass
-
-        @classmethod
-        def bulk_insert(cls, new_records):
-            print('Bulk insert of %s: %s' % (cls.__name__, new_records))
-            max_id = cls.get_max_id()
-            for rec in new_records:
-                if id not in rec:
-                    max_id += 1
-                    rec['id'] = max_id
-            db.engine.execute(cls.__table__.insert(), new_records)
-            cls.commit()
-
+    __DBMixin.db = db
+    CRUDMixin.logger = app.logger
     db.CRUDMixin = CRUDMixin
-
-    class NamingMixin(object):
-
-        @classmethod
-        def get_api(cls):
-            return cls.__tablename__
-
-        @classmethod
-        def get_plural(cls):
-            return app.inflect.plural(cls.get_api())
-
-    db.NamingMixin = NamingMixin
-
-    class IntrospectionMixin(object):
-
-        @classmethod
-        def columns(cls, skip_pk=True, remove=''):
-            remove = remove.split()
-            insp = inspect(cls)
-            if skip_pk:
-                pk = [p.key for p in insp.primary_key]
-                remove += pk
-            cols = set(insp.columns.keys()) - set(remove)
-            return cols
-
-        @classmethod
-        def relationships(cls, remove=''):
-            remove = remove.split()
-            cols = set(inspect(cls).relationships) - set(remove)
-            return cols
-
-        def to_dict(self, remove=''):
-            return {c: getattr(self, c) for c in self.columns(remove=remove)}
-
-    db.IntrospectionMixin = IntrospectionMixin
-
-    class OperationsMixin(object):
-
-        @classmethod
-        def get(cls, id):
-            return db.session.query(cls).get(id)
-
-        @classmethod
-        def get_by(cls, key, val, one=True, or_none=True):
-            rec = db.session.query(cls).filter(getattr(cls, key) == val)
-            if one:
-                if or_none:
-                    return rec.one_or_none()
-                else:
-                    return rec.one()
-            else:
-                return rec.all()
-
-        @classmethod
-        def get_or_404(cls, id):
-            return db.session.query(cls).get_or_404(id)
-
-        @classmethod
-        def from_form(cls, form):
-            obj = cls()
-            form.populate_obj(obj)
-            return obj
-
-        @classmethod
-        def get_max_id(cls):
-            return db.session.query(db.func.max(cls.id)).scalar() or 0
-
-        @staticmethod
-        def commit():
-            log('DIRTY: %s' % db.session.dirty)
-            log('NEW: %s' % db.session.new)
-            log('DELETED: %s' % db.session.deleted)
-            db.session.commit()
-
-        @staticmethod
-        def rollback():
-            db.session.rollback()
-
-        @classmethod
-        def others(cls, id):
-            return cls.query.filter(cls.id != id)
-
     db.OperationsMixin = OperationsMixin
 
     class BaseModel(db.Model, CRUDMixin, NamingMixin):
-        ''' used as super model for all other models '''
+        """ used as super model for all other models
+
+        :var id: every model should have a unique id
+        """
         __abstract__ = True
 
         id = db.Column(db.Integer, primary_key=True)
 
         @classmethod
         def derive_polymorphic(basemodel, cls, identities):
-            ''' returns a polymorphic subclass of cls and basemodel '''
+            """ returns a polymorphic subclass of cls and basemodel """
             log('Making polymorphic %s from %s: %s'
                 % (cls.__name__, basemodel.__name__, identities))
             identities_list = identities.split()
@@ -247,7 +358,7 @@ def enable(app, debug=False):  # noqa: C901
         @classmethod
         def add_reference(cls, peer_cls, name=None, rev_name='', nullable=False, default=None,
                           rev_cascade='save-update, merge, delete', add_backref=True):
-            ''' create 1:n relation '''
+            """ create 1:n relation """
             name = name or peer_cls.__tablename__
             foreign_key = cls._add_foreign_key(peer_cls, name, nullable, default)
 
@@ -264,7 +375,7 @@ def enable(app, debug=False):  # noqa: C901
         @classmethod
         def add_single_reference(cls, peer_cls, name=None, rev_name='', nullable=False, default=None,
                                  rev_cascade='save-update, merge, delete', add_backref=True):
-            ''' create 1:1 relation '''
+            """ create 1:1 relation """
             name = name or peer_cls.__tablename__
             foreign_key = cls._add_foreign_key(peer_cls, name, nullable, default)
 
@@ -279,7 +390,7 @@ def enable(app, debug=False):  # noqa: C901
 
         @classmethod
         def add_cross_reference(cls, peer_cls, names=None, x_names=None, x_cls=None):
-            ''' adds an m:n relation between this class and peer_cls '''
+            """ adds an m:n relation between this class and peer_cls """
             names = names or (cls.__tablename__, peer_cls.__tablename__)
             x_names = x_names or (app.inflect.plural(names[1]), app.inflect.plural(names[0]))
 
@@ -322,20 +433,46 @@ def enable(app, debug=False):  # noqa: C901
 
 
 def extend_polymorphic(basemodel, identities):
+    """ class decorator that makes the model polymorhphic (suitable for inheritance)
+
+    Args:
+        basemodel (SQLAlchemy model): added as supermodel
+        identities (string): names of all possible identities of derived models
+    """
     def class_decorator(cls):
         return basemodel.derive_polymorphic(cls, identities)
     return class_decorator
 
 
 def extend_model(super_cls, identity=None, single_table=True):
-    ''' decorator for  super_cls.derive_model '''
+    """ class decorator that identifies this model as derived
+
+    Args:
+        super_cls (polymorphic SQLalchemy model): super model to derive from
+        identity (string): identity of this model (class name by default)
+        single_table (boolean): use single table inheritance (as opposed to joined table)
+    """
     def class_decorator(cls):
         return super_cls.derive_model(cls, identity, single_table)
     return class_decorator
 
 
 def add_reference(peer_cls, **kwargs):
-    ''' decorator for to cls.add_reference '''
+    """ class decorator that adds a reference to another model
+
+    Adds a foreign key and a n:1 relationship.
+
+    Args:
+        peer_cls: model class to refer to
+        kwargs: keyword arguments
+
+            * name (string): name of reference (API name of peer_cls by default)
+            * rev_name (string): name of reverse relationship (plural of peer_cls by default)
+            * nullable (boolean): if True, may be null
+            * default (int): default value of foreign key
+            * rev_cascade (string): cascade directive for back reference ('save-update, merge, delete' by default)
+            * add_backref: if True add a back reference to peer_cls
+    """
     def class_decorator(cls):
         cls.add_reference(peer_cls, **kwargs)
         return cls
@@ -343,7 +480,21 @@ def add_reference(peer_cls, **kwargs):
 
 
 def add_single_reference(peer_cls, **kwargs):
-    ''' decorator for to cls.add_single_reference '''
+    """ class decorator to add 1:1 reference to a model
+
+    Adds a foreign key and a n:1 relationship.
+
+    Args:
+        peer_cls: model class to refer to
+        kwargs: keyword arguments
+
+            * name (string): name of reference (API name of peer_cls by default)
+            * rev_name (string): name of reverse relationship (plural of peer_cls by default)
+            * nullable (boolean): if True, may be null
+            * default (int): default value of foreign key
+            * rev_cascade (string): cascade directive for back reference ('save-update, merge, delete' by default)
+            * add_backref: if True add a back reference to peer_cls
+     """
     def class_decorator(cls):
         cls.add_single_reference(peer_cls, **kwargs)
         return cls
@@ -351,7 +502,16 @@ def add_single_reference(peer_cls, **kwargs):
 
 
 def add_cross_reference(peer_cls=None, **kwargs):
-    ''' decorator for to cls.add_cross_reference '''
+    """ class decorator that adds a cross-reference to a model
+
+    This results in a m:n relationship through Object Association.
+
+    Args:
+        peer_cls (model): model to cross-reference with (class by default: self-reference)
+        names (tuple of strings): names for reference from class to peer_cls and vice versa
+        x_cls (model): model to hold references to class and peer_cls (if None, a new model is defined and named after class and peer_cls)
+        x_names (tuple of strings): names for references from x_cls to class and peer_cls
+    """
     def class_decorator(cls):
         cls.add_cross_reference(peer_cls or cls, **kwargs)
         return cls
@@ -359,7 +519,7 @@ def add_cross_reference(peer_cls=None, **kwargs):
 
 
 def cross_reference(cls, peer_cls, **kwargs):
-    ''' decorator for to x_cls.add_reference '''
+    """ class decorator that adds references to cls and peer_cls to a model """
     def class_decorator(x_cls):
         cls.add_cross_reference(peer_cls, x_cls=x_cls, **kwargs)
         return x_cls
@@ -367,7 +527,7 @@ def cross_reference(cls, peer_cls, **kwargs):
 
 
 def add_enum_reference(peer_cls, **kwargs):
-    ''' decorator for to cls.add_enum_reference '''
+    """ decorator for to cls.add_enum_reference """
     def class_decorator(cls):
         cls.add_enum_reference(peer_cls, **kwargs)
         return cls

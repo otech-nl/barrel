@@ -1,3 +1,4 @@
+""" Wrapper around wtforms_alchemy and flask_wtf. """
 from flask import abort, redirect, render_template, request, url_for
 from flask_security import current_user
 from flask_wtf import FlaskForm as Form
@@ -6,21 +7,35 @@ from wtforms_alchemy import model_form_factory
 
 ########################################
 
+class FormModelMixin(object):
+    """ Extend models with the get_form method below. """
+
+    @classmethod
+    def get_form(cls):
+        """ Get a basic form class for this model. """
+        class FormClass(BarrelForms.ModelForm):
+            class Meta:
+                model = cls
+        return FormClass
+
 
 class BarrelForms(object):
+    """ A base form with additional methods. """
 
-    class FormModelMixin(object):
-        @classmethod
-        def get_form(cls):
-            class FormClass(BarrelForms.ModelForm):
-                class Meta:
-                    model = cls
-            return FormClass
+    FormModelMixin = FormModelMixin
 
     ########################################
 
     def __init__(self, app, messages=None, lang='en',
                  date_format='%Y-%m-%d', datetime_format='%Y-%m-%d %H:%M'):
+        """
+        Args:
+            app: Flask app
+            messsages (dict of strings): texts for flash messages ("updated", "created", "error" and "illegal")
+            lang ("en" or "nl"): selects a default set of messages
+            date_format (string): format for parsing and showing dates
+            datetime_format (string): format for parsing and showing datetimes
+        """
         self.app = app
         self.messages = messages or dict(
             nl=dict(
@@ -53,11 +68,23 @@ class BarrelForms(object):
                             temp_fields.append([f for f in self._unbound_fields if f[0] == name][0])
                             self._unbound_fields = temp_fields
                 return super(Form, self).__iter__()
+
         BarrelForms.ModelForm = ModelForm
 
     ########################################
 
     def handle_form(self, model_class, form_class=None, model=None, **kwargs):
+        """ Validate form and create or update object.
+
+        Automatically rolls back in case of errors.
+        Errors are logged and sent to the user as flash messages.
+
+        Args:
+            model_class: class of model
+            form_class: by default form class from model_class
+            model: current model (leads to update)
+            kwargs: will be forwarded to create/update
+        """
         form_class = form_class or model_class.get_form()
         form = form_class(request.form, obj=model)
         if form.validate_on_submit():
@@ -97,7 +124,17 @@ class BarrelForms(object):
 
     def render_page(self, id, model_class, template='lists/base.jinja2',
                     form_class=None, next_page=None, columns='', **kwargs):
-        ''' render a list with a form modal '''
+        ''' Render a list with a form modal.
+
+        Args:
+            id: identity of model (if 0, a new model may be created)
+            model_class: class of model
+            template (string): template used for list
+            form_class: class of form to be used (form class of model_class by default)
+            next_page (url): page to go to after this page (current page by default)
+            columns (list of strings): names of culumns to show in list
+            kwargs: forwarded to :py:func:`handle_form`
+        '''
         form_class = form_class or model_class.get_form()
         model = model_class.get(id) if id else None
         api = model_class.get_api()
@@ -136,7 +173,15 @@ class BarrelForms(object):
     ########################################
 
     def child_form(self, id, model_class, parent_id, parent_class, **kwargs):
-        ''' a generic function for a form of a model with a child '''
+        ''' Render a form of a model with a child.
+
+        Args:
+            id: identity of model (if 0, a new child model is created for this parent)
+            model_class: class of model
+            parent_id: identity of parent model (if 0, a new model may be created)
+            model_class: class of parent model
+            kwargs: forwarded to :py:func:`render_page`
+        '''
         api = model_class.get_api()
         parent_api = parent_class.get_api()
         if not id:
@@ -157,6 +202,16 @@ class BarrelForms(object):
 
 
 def enable(app, **kwargs):
+    """ Enable this module.
+
+    Available as app.forms
+
+    Args:
+        app: Flask app
+        kwargs: forwarded to BarrelForms
+    Returns:
+        BarrelForms object
+    """
     app.logger.info('Enabling forms')
     app.forms = BarrelForms(app, **kwargs)
     return app.forms
