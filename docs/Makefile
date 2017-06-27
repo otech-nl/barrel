@@ -21,9 +21,8 @@ help:
 
 
 init: cleaner
-	# rm -rf barrel skeleton
 	sphinx-apidoc -o barrel ../barrel
-	sphinx-apidoc -o skeleton ../skeleton
+	# sphinx-apidoc -o skeleton ../skeleton
 
 cleaner: clean
 	rm -rf barrel skeleton

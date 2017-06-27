@@ -1,3 +1,8 @@
+""" trivial wrapper around Flask Mail
+
+    Available through app.mail
+"""
+
 try:
     from flask_mail import Mail, Message
 except ImportError as e:

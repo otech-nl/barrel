@@ -1,3 +1,5 @@
+""" wrapper around Flask Restful and Flask Datatables """
+
 import flask
 from flask_security import login_required
 
@@ -5,46 +7,57 @@ from flask_security import login_required
 ########################################
 
 
-def enable(app, models=[]):
-    try:
-        import flask_datatables as datatables
-        import flask_restful as rest
+try:
+    import flask_datatables as datatables
+    import flask_restful as rest
+
+    class SecureResource(rest.Resource):
+        """ Require login for access to resources. """
+        method_decorators = [login_required]
+
+    ########################################
+
+    def datatables_api(app, model):
+        """ Create an API that is suitable for use with datatables.
+
+        Args:
+            app: Barrel app
+            model: SQLAlchemy model
+        """
+        resource, path, endpoint = datatables.get_resource(SecureResource,
+                                                            model,
+                                                            app.db.session,
+                                                            basepath='/api/')
+        app.rest.add_resource(resource, path, endpoint=endpoint)
 
         ########################################
 
-        class BarrelRest(rest.Api):
+    def enable(app, models=[]):
+        """ enable this module
 
-            def __init__(self, app, models):
-                rest.Api.__init__(self, app)
-                for model in models:
-                    self.datatables_api(app, model)
-
-            class SecureResource(rest.Resource):
-                ''' require login for access to resources '''
-                method_decorators = [login_required]
-
-            def datatables_api(self, app, model):
-                ''' create an API that is suitable for use with datatables '''
-                resource, path, endpoint = datatables.get_resource(self.SecureResource,
-                                                                   model,
-                                                                   app.db.session,
-                                                                   basepath='/api/')
-                self.add_resource(resource, path, endpoint=endpoint)
-
-        ########################################
-
+        Args:
+            app: Barrel app
+            models: list of SQLAlchemy model
+        """
         app.logger.info('Enabling REST API')
-        app.rest = BarrelRest(app, models)
+
+        app.rest = rest.Api(app)
+        app.rest.SecureResource = SecureResource
+        app.rest.datatables_api = datatables_api
+
+        for model in models:
+            datatables_api(app, model)
+
         return app.rest
 
-    except ImportError as e:
-        module = str(e).split()[-1]
-        print('Please run "pip install %s"' % module)
+except ImportError as e:
+    module = str(e).split()[-1]
+    print('Please run "pip install %s"' % module)
 
 # ########################################
 
 
 def jsonify(query_result):
-    ''' prepare a SQLAlchemy query result for a JSON response '''
+    """ prepare a SQLAlchemy query result for a JSON response """
     result = [i.to_dict() for i in query_result]
     return flask.jsonify(result)

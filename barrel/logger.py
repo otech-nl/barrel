@@ -1,3 +1,5 @@
+""" configure the standard Flask logger """
+
 import flask
 from flask_security import current_user
 from flask_security.core import AnonymousUser
@@ -10,6 +12,7 @@ import traceback
 
 
 def enable(app):
+    """ enable this module """
     if app.config['LOGGER_NAME'] == app.name:
         app.config['LOGGER_NAME'] = './%s.log' % app.name
     log = path.join(getcwd(), app.config['LOGGER_NAME'])

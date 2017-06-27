@@ -1,3 +1,11 @@
+""" wrapper around Flask security
+
+    Usage:
+        # first call :py:func:`boorstrap`
+        # than extend app.db.User and app.db.Role
+        # finally call :py:func:`enable`
+"""
+
 from flask_security import Security, SQLAlchemyUserDatastore, RoleMixin, UserMixin, utils
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -5,7 +13,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 
 def bootstrap(app):  # noqa: C901  too complex
-    ''' prepare abstract Role and User classes '''
+    """ Prepare abstract Role and User classes.
+
+    Available as app.db.User and app.db.Role
+    """
     db = app.db
 
     class Role(db.BaseModel, RoleMixin):
@@ -56,11 +67,25 @@ def bootstrap(app):  # noqa: C901  too complex
         #     return self.role.id
 
         def has_access(self, model):
-            ' (dummy) returns true if user has access to model '
+            """ Indicate if this user has access to a model.
+
+            Always True by default. Override in your own User class.
+
+            Args:
+                model: SQLAlchemy model
+            Returns:
+                True if user has access to model
+            """
             return True
 
         def get_permission(self, model=None):
-            ' returns either ro (read only), rw (read write) or - (none)'
+            """ Check permissions for user on model.
+
+            Args:
+                model: SQLAlchemy model
+            Returns:
+                string: either ro (read only), rw (read write) or - (none)
+            """
             if self.has_role('admin'):
                 return 'rw'
             elif self.has_role('mod'):
@@ -81,6 +106,17 @@ def bootstrap(app):  # noqa: C901  too complex
 
 
 def enable(app, user_class, role_class):
+    """ Enable Flask-Security.
+
+    Available as app.security.
+    Adds an m:n relationship between user_class and role_class
+
+    Args:
+        user_class: actual user class, derived from app.db.User
+        role_class: actual role class, derived from app.db.Role
+    Returns:
+        Flask-Security instance.
+    """
     app.logger.info('Enabling security')
     user_class.add_cross_reference(role_class)
 
