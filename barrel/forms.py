@@ -3,9 +3,50 @@ from flask import abort, redirect, render_template, request, url_for
 from flask_security import current_user
 from flask_wtf import FlaskForm as Form
 from sqlalchemy.exc import SQLAlchemyError
-from wtforms_alchemy import model_form_factory
+from wtforms_alchemy import model_form_factory, ClassMap, FormGenerator
+from wtforms import fields, widgets
+from barrel import db
 
 ########################################
+
+
+class MoneyWidget(widgets.Input):
+    """ Widget to show money """
+    currency = '&euro;'
+
+    def __init__(self):
+        self.input_type = 'number'
+
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('step', 0.01)
+        return '<div class="input-group"><span class="input-group-addon">%s</span>%s</div>'\
+               % (self.currency, super(MoneyWidget, self).__call__(field, **kwargs))
+
+
+class MoneyField(fields.Field):
+    """ Form field to show money. """
+    widget = MoneyWidget
+
+########################################
+
+
+class PercentageWidget(widgets.Input):
+    """ Widget to show percentages """
+
+    def __init__(self):
+        self.input_type = 'number'
+
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('step', 0.01)
+        return ('<div class="input-group">%s<span class="input-group-addon">%%</span></div>'
+                % (super(PercentageWidget, self).__call__(field, **kwargs)))
+
+
+class PercentageField(fields.Field):
+    widget = PercentageWidget
+
+########################################
+
 
 class FormModelMixin(object):
     """ Extend models with the get_form method below. """
@@ -55,6 +96,11 @@ class BarrelForms(object):
         class ModelForm(model_form_factory(Form,
                                            date_format=date_format,
                                            datetime_format=datetime_format)):
+
+            # this gets money in the wtforms type map, but not on the screen
+            # class Meta:
+            #     type_map = ClassMap({db.MoneyType: MoneyField})
+
             def __iter__(self):
                 ''' make the 'only' attribute order-sensitive '''
                 field_order = getattr(self, 'only', None)

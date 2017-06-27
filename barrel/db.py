@@ -3,9 +3,38 @@ from flask_sqlalchemy import SQLAlchemy
 from pprint import pformat
 from sqlalchemy.orm import backref
 from sqlalchemy.inspection import inspect
+import sqlalchemy.types as types
 import inflect
+import sqlalchemy
+
+
+def log(msg):
+    pass
+
+inflect_engine = inflect.engine()
 
 ########################################
+
+
+class MoneyType(types.TypeDecorator):
+    """ SQLAlchemy column type to store money values """
+
+    impl = sqlalchemy.Numeric
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('scale', 2)
+        types.TypeDecorator.__init__(self, *args, **kwargs)
+
+
+class PercentageType(sqlalchemy.Numeric):
+    """ SQLAlchemy column type to store percentage values """
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('scale', 2)
+        super(PercentageType, self).__init__(**kwargs)
+
+########################################
+
 
 class NamingMixin(object):
     """ Provide some convenient names for models. """
@@ -22,7 +51,8 @@ class NamingMixin(object):
     @classmethod
     def get_plural(cls):
         """ return the plural form of the API name """
-        return app.inflect.plural(cls.get_api())
+        return inflect_engine.plural(cls.get_api())
+
 
 class IntrospectionMixin(object):
     """ access to meta data about a model
@@ -92,7 +122,7 @@ class CRUDMixin(__DBMixin):
         """ remove all keyword arguments that are not valid CRUD arguments"""
         cols = cls.__dict__
         rem = [k for k in kwargs
-                if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols]
+               if k not in cols and '_%s' % k not in cols and '%s_id' % k not in cols]
         for r in rem:
             del kwargs[r]
 
@@ -209,7 +239,7 @@ class CRUDMixin(__DBMixin):
             if id not in rec:
                 max_id += 1
                 rec['id'] = max_id
-        self.db.engine.execute(cls.__table__.insert(), new_records)
+        cls.db.engine.execute(cls.__table__.insert(), new_records)
         cls.commit()
 
 
@@ -261,10 +291,10 @@ class OperationsMixin(__DBMixin):
 
 
 def enable(app, debug=False):  # noqa: C901
-    """ Enable this module.
+    """ Enable this Flask-SQLAlchemy.
 
     Available through app.db.
-    Provides app.db.BaseModel with should be used as superclass by all models.
+    Provides app.db.BaseModel with should be used as superclass for all models.
 
     Args:
         app (Flask app)
@@ -276,16 +306,16 @@ def enable(app, debug=False):  # noqa: C901
 
 
     app.db = SQLAlchemy(app)  # session_options={'autocommit': False, 'autoflush': False}
-    app.NamingMixin = NamingMixin
-    app.IntrospectionMixin = IntrospectionMixin
+    app.db.NamingMixin = NamingMixin
+    app.db.IntrospectionMixin = IntrospectionMixin
+    app.db.MoneyType = MoneyType
+    app.db.PercentageType = PercentageType
 
-    app.inflect = inflect.engine()
+    app.inflect = inflect_engine
     db = app.db
 
     db.echo = app.config['DEBUG']
 
-    def log(msg):
-        pass
     # for debugging
     # log = app.logger.report
 
@@ -304,7 +334,7 @@ def enable(app, debug=False):  # noqa: C901
         id = db.Column(db.Integer, primary_key=True)
 
         @classmethod
-        def derive_polymorphic(basemodel, cls, identities):
+        def make_polymorphic_top(basemodel, cls, identities):
             """ returns a polymorphic subclass of cls and basemodel """
             log('Making polymorphic %s from %s: %s'
                 % (cls.__name__, basemodel.__name__, identities))
@@ -432,7 +462,7 @@ def enable(app, debug=False):  # noqa: C901
 ########################################
 
 
-def extend_polymorphic(basemodel, identities):
+def make_polymorphic_top(basemodel, identities):
     """ class decorator that makes the model polymorhphic (suitable for inheritance)
 
     Args:
@@ -440,7 +470,7 @@ def extend_polymorphic(basemodel, identities):
         identities (string): names of all possible identities of derived models
     """
     def class_decorator(cls):
-        return basemodel.derive_polymorphic(cls, identities)
+        return basemodel.make_polymorphic_top(cls, identities)
     return class_decorator
 
 
