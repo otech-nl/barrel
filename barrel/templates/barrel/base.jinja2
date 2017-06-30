@@ -13,9 +13,7 @@
     {% endfor %}
   </head>
   <body>
-    {% block first %}
-      <script src='https://code.jquery.com/jquery-2.1.1.min.js'></script>
-    {% endblock first %}
+    {% block first %} {% endblock first %}
     {% block messages %} {{ macro.messages() }} {% endblock messages %}
     {%- block navigation %}{% endblock navigation -%}
     {%- block body %}EMPTY BODY{% endblock body -%}
@@ -26,13 +24,15 @@
       <script src='{{ url_for('static', filename=script) }}'></script>
     {% endfor -%}
     {%- block final %} {# final block, after all others have loaded #} {% endblock final -%}
-    <script>
-      $(document).ready(function() {
-      {%- block docready %}
-        {# autofocus on first input #}
-        $('form:first *:input[type!=hidden]:first').focus();
-      {% endblock docready -%}
-      });
-    </script>
+    {% block jquery %}
+      <script>
+        $(document).ready(function() {
+        {%- block docready %}
+          {# autofocus on first input #}
+          $('form:first *:input[type!=hidden]:first').focus();
+        {% endblock docready -%}
+        });
+      </script>
+    {% endblock jquery %}
   </body>
 </html>

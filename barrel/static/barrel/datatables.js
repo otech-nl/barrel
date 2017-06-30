@@ -40,7 +40,7 @@ function init_datatable(column_names, user_options) {
             }
         }
     };
-    Object.assign(options, user_options);
+    _.extend(options, user_options);
 
     return options;
 }
@@ -77,6 +77,6 @@ function basic_datatable(table_id, element, column_names, user_options, disable_
         info: false,
         sorting: []
     });
-    Object.assign(options, user_options);
+    _.extend(options, user_options);
     return create_datatable(table_id, element, options, !disable_click);
 }

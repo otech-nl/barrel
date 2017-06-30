@@ -27,7 +27,7 @@ function init_datetimepicker(user_options) {
         dayOfWeekStart: 1,
         weeks: true
     };
-    Object.assign(options, user_options);
+    _.extend(options, user_options);
     $('[type=datetime]').attr('type','text').datetimepicker(options);
     // set type=text to disable default chrome datepicker
 
