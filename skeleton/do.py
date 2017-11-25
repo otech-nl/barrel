@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf8
 from app import app
 from models import Role, User, Group
 from barrel.util import app_context
@@ -26,9 +25,9 @@ def add_user(email, password, role_name, group):
         group_id = group.id
 
     User.create(email=email,
-        password=password,
-        roles=[role],
-        group_id=group_id)
+                password=password,
+                roles=[role],
+                group_id=group_id)
 
 ########################################
 
@@ -45,10 +44,10 @@ def init():
     Role.create(name='user')
 
     Group.create(
-        abbr=u'OTW',
-        name=u'OTech BV')
+        abbr=u'ACME',
+        name=u'Administration, Control and Management Environment')
 
-    add_user('steets@otech', 'test123', 'admin', group=Group.get_admin_group())
+    add_user('admin', 'nidma', 'admin', group=Group.get_admin_group())
 
     return 'Database initialized successfully'
 
@@ -60,19 +59,6 @@ def init():
 def seed():
     ''' Add testing data to the database '''
     print('Seeding')
-
-    Role.create(name='admin')
-    Role.create(name='mod')
-    Role.create(name='user')
-
-    Group.create(
-        abbr=u'OTH',
-        name=u'OTech Holding BV')
-    group = Group.create(
-        abbr=u'OTW',
-        name=u'OTech BV')
-
-    add_user('steets@otech', 'test123', 'admin', group=Group.get_admin_group())
 
     return 'Database filled successfully'
 

@@ -1,6 +1,6 @@
 from app import app
 from flask import redirect, render_template, request, url_for
-from flask_security import current_user, login_required, utils as security, roles_accepted, logout_user
+from flask_security import current_user, login_required, utils as security, roles_accepted
 import barrel
 import models
 import wtforms
@@ -12,8 +12,7 @@ def SelectField(model, label_field='name', label=None, **kwargs):
     return wtforms.SelectField(label,
                                choices=choices,
                                coerce=int,
-                               **kwargs
-    )
+                               **kwargs)
 
 ########################################
 
@@ -24,6 +23,7 @@ def home():
     return render_template('base.jinja2')
 
 ########################################
+
 
 @app.route('/user/', defaults={'id': None})
 @app.route('/user/<int:id>', methods=['GET', 'POST'])
@@ -74,7 +74,7 @@ def user(id):
             user = models.User.create(**kwargs)
         return redirect(url_for('user', id=user.id))
     else:
-        columns='email role active'
+        columns = 'email role active'
         users = models.User.query
         if current_user.has_role('admin'):
             columns += ' group'
@@ -87,6 +87,44 @@ def user(id):
             columns=columns,
             form_class=UserForm,
             rows=users)
+
+########################################
+
+
+@app.route('/role/', defaults={'id': None})
+@app.route('/role/<int:id>', methods=['GET', 'POST'])
+@roles_accepted('admin')
+def role(id):
+        return app.forms.render_page(
+            id,
+            models.Role,
+            template='lists/base.jinja2',
+            columns='name',
+            rows=models.Role.query
+        )
+
+########################################
+
+
+@app.route('/group/', defaults={'id': None})
+@app.route('/group/<int:id>', methods=['GET', 'POST'])
+@roles_accepted('admin')
+def group(id):
+        return app.forms.render_page(
+            id,
+            models.Group,
+            template='lists/base.jinja2',
+            columns='abbr name',
+            rows=models.Group.query
+        )
+
+########################################
+
+
+@app.route('/profiel')
+@login_required
+def profiel():
+    return render_template('base.jinja2')
 
 ########################################
 
@@ -108,43 +146,7 @@ def init(status):
 @app.route('/seed')
 @roles_accepted('admin')
 def seed():
-    do.seed()
-
-########################################
-
-
-@app.route('/role/', defaults={'id': None})
-@app.route('/role/<int:id>', methods=['GET', 'POST'])
-@roles_accepted('admin')
-def role(id):
-        return app.forms.render_page(
-            id,
-            models.Role,
-            template='lists/base.jinja2',
-            columns='name'
-        )
-
-########################################
-
-
-@app.route('/group/', defaults={'id': None})
-@app.route('/group/<int:id>', methods=['GET', 'POST'])
-@roles_accepted('admin')
-def group(id):
-        return app.forms.render_page(
-            id,
-            models.Group,
-            template='lists/base.jinja2',
-            columns='abbr name'
-        )
-
-########################################
-
-
-@app.route('/profiel')
-@login_required
-def profiel():
-    return render_template('base.jinja2')
+    return do.seed()
 
 ########################################
 

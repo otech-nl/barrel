@@ -19,6 +19,7 @@ class BaseModel(db.BaseModel, db.CRUDMixin, app.forms.FormModelMixin):
 
 ########################################
 
+
 barrel.security.bootstrap(app)
 
 
@@ -39,6 +40,7 @@ class User(db.User, db.CRUDMixin):
     def has_access(self, model):
         return self.group_id == model.get_group_id()
 
+
 barrel.security.enable(app, User, Role)
 
 ########################################
@@ -53,7 +55,7 @@ class Group(BaseModel):
 
     @staticmethod
     def get_admin_group():
-        return Group.query.filter_by(abbr=u'OTW').one()
+        return Group.query.filter_by(abbr=u'ACME').one()
 
 
 ########################################
