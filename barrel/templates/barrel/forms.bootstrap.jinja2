@@ -22,7 +22,7 @@
 {%- endmacro %}
 
 
-{% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[], model=None) -%}
+{% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[], model=None, after_delete=None) -%}
   <form method={{method}} id="{{id}}" action="{{ action_url }}" role="form"{% if enctype %} enctype={{enctype}}{% endif %}>
     {{ form.hidden_tag() if form.hidden_tag }}
     {% if caller %}
@@ -64,7 +64,7 @@
         {% if model %}
           function delete_item() {
           if( confirm('Deze {{model.__table__}} en alle onderliggende gegevens worden verwijderd.\nWeet u het zeker?' )) {
-          $(location).attr('href', "{{ url_for('action', model=model.__table__, action='delete', id=model.id) }}");
+          $(location).attr('href', "{{ url_for('action', model=model.__table__, action='delete', id=model.id, next_page=after_delete) }}");
           }
           }
         {% endif %}
