@@ -1,6 +1,6 @@
 from app import app
 import barrel
-import controllers  # noqa: F401
+import controllers, do  # noqa: F401
 import models
 import os
 

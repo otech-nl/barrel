@@ -1,4 +1,0 @@
--e ..
-flask_admin
-flask_datatables
-flask_restful

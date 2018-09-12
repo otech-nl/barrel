@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask-barrel = {editable = true, path = "./../../barrel"}
+flask-sqlangelo = {editable = true, path = "./../../sqlangelo"}
+flask-restful = "*"
+sqlalchemy = "<1.2"
+
+[dev-packages]
+ptpython = "*"
+
+[requires]
+python_version = "3.6"

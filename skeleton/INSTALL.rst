@@ -3,14 +3,23 @@ Barrel Skeleton
 
 The skeleton is a bare bones website using barrel.
 
-To install:
+To install make sure you are in the `skeleton` directory.
+
+First install javascript dependencies (mainly Bootstrap and Datatables):
 
 ::
 
-   cd skeleton
-   pip install -r requirements.txt
    cd static
    npm install
    cd ..
-   python init.py initdb
-   python server.py
+   pipenv shell
+
+Then install javascript dependencies (mainly Bootstrap and Datatables):
+
+::
+
+   pipenv install
+   flask init
+   flask run
+
+Finally, you can add users with `flask add_user steets test123 mod ACME`

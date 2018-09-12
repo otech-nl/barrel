@@ -13,7 +13,7 @@ import traceback
 
 def enable(app):
     """ enable this module """
-    if app.config['LOGGER_NAME'] == app.name:
+    if ('LOGGER_NAME' not in app.config) or (app.config['LOGGER_NAME'] == app.name):
         app.config['LOGGER_NAME'] = './%s.log' % app.name
     log = path.join(getcwd(), app.config['LOGGER_NAME'])
     file_handler = logging.FileHandler(log)

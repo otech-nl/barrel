@@ -1,7 +1,7 @@
 """ wrapper around Flask security
 
     Usage:
-        # first call :py:func:`boorstrap`
+        # first call :py:func:`bootstrap`
         # than extend app.db.User and app.db.Role
         # finally call :py:func:`enable`
 """
@@ -46,21 +46,15 @@ def bootstrap(app):  # noqa: C901  too complex
         def password(self):
             return self._password
 
-        @staticmethod
-        def encrypt_password(plaintext):
-            return utils.encrypt_password(plaintext)
-
         @password.setter
-        def _set_password(self, plaintext):
-            self._password = self.encrypt_password(plaintext)
+        def password(self, plaintext):
+            self._password = utils.encrypt_password(plaintext)
 
         def __repr__(self):
             return self.email
 
         # def get_role(self):
-        #     if len(self.roles.all()) > 1:
-        #         raise ValueError('Cannot get single role for user who has many')
-        #     return self.roles[0]
+        #     return self.roles.first()
 
         # @hybrid_property
         # def role_id(self):

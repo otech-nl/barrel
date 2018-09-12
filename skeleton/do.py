@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 from app import app
-from models import Role, User, Group
+from models import Role, User, Group, Company, Customership
 from barrel.util import app_context
 import barrel
-import begin
+import click
 
 
 ########################################
 
-@app_context(app)
-@begin.subcommand
+@app.cli.command()
+@click.argument('email')
+@click.argument('password')
+@click.argument('role_name')
+@click.argument('group')
 def add_user(email, password, role_name, group):
     try:
         role = Role.query.filter(Role.name == role_name).one()
@@ -24,49 +27,35 @@ def add_user(email, password, role_name, group):
     except TypeError:
         group_id = group.id
 
-    User.create(email=email,
-                password=password,
-                roles=[role],
-                group_id=group_id)
+    return User.create(email=email,
+                       password=password,
+                       roles=[role],
+                       group_id=group_id)
 
 ########################################
 
 
-@app_context(app)
-@begin.subcommand
+@app.cli.command()
 def init():
     ''' Initialize the database '''
     print('Initializing')
-    barrel.db.init(app)
+    app.db.init()
 
-    Role.create(name='admin')
+    role = Role.create(name='admin')
     Role.create(name='mod')
     Role.create(name='user')
 
-    Group.create(
+    group = Group.create(
         abbr=u'ACME',
         name=u'Administration, Control and Management Environment')
 
-    add_user('admin', 'nidma', 'admin', group=Group.get_admin_group())
+    user =  User.create(email='admin',
+                        password='nimda',
+                        role=role,
+                        group=group)
+    company = Company.create(name='OTech.nl')
+    Customership.create(company=company, user=user)
 
     return 'Database initialized successfully'
-
-########################################
-
-
-@app_context(app)
-@begin.subcommand
-def seed():
-    ''' Add testing data to the database '''
-    print('Seeding')
-
-    return 'Database filled successfully'
-
-########################################
-
-
-@begin.start(cmd_delim='--')
-def run():
-    pass
 
 ########################################

@@ -1,6 +1,7 @@
 import barrel
 
-app = barrel.init('MyBarrelApp')
+
+app = barrel.init('BarrelSkeleton')
 
 
 if app.config['DEBUG']:

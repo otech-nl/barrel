@@ -3,7 +3,17 @@ from datetime import datetime
 import flask
 from werkzeug.routing import BaseConverter, ValidationError
 import jinja2
-from . import admin, db, forms, logger, mail, rest, security, util  # noqa: F401, E401
+from . import db, forms, logger, mail, security, util  # noqa: F401, E401
+
+try:
+    from . import admin
+except ModuleNotFoundError as e:
+    print(f'Admin module not available: {e}')
+
+try:
+    from . import rest
+except ModuleNotFoundError as e:
+    print(f'REST module not available: {e}')
 
 ########################################
 
