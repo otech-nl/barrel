@@ -2,8 +2,8 @@
 {% from "barrel/bootstrap.jinja2" import symbol %}
 
 
-{% macro button(text, url, glyphicon=None) %}
-  <a class="btn btn-primary" href="{{ url }}">
+{% macro button(text, url, glyphicon=None, cls="primary") %}
+  <a class="btn btn-{{cls}}" href="{{ url }}">
     {% if glyphicon %}{{symbol(glyphicon)}}{% endif %} {{text}}
   </a>
 {% endmacro %}
@@ -53,7 +53,7 @@
         {% if model %}
           <a class='btn btn-danger' onclick='delete_item()'>{{symbol("remove")}} Verwijderen</a>
         {% endif %}
-        {% for b in buttons %}{{button(b)}}{% endfor %}
+        {% for b in buttons %}{{button(*b)}}{% endfor %}
       </div>
       <script>
         $(document).ready(function(){
