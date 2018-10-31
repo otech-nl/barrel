@@ -50,7 +50,7 @@ function create_datatable(table_id, element, options, register_click) {
 
     if(register_click) {
         table.on('click', 'tbody td', function() {
-            var data = table.row(this).data();
+            var data = table.row(this).data() || table.row().data();
             window.location = "/"+element+"/"+data.id;
         });
     }
