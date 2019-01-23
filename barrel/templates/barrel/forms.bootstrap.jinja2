@@ -22,7 +22,7 @@
 {%- endmacro %}
 
 
-{% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[], model=None, after_delete=None) -%}
+{% macro render_form(form, fields=None, id="form", method="POST", action_url='', new_url=None, readonly=false, enctype=None, buttons=[], model=None, after_delete=None, allow_delete=True) -%}
   <form method={{method}} id="{{id}}" action="{{ action_url }}" role="form"{% if enctype %} enctype={{enctype}}{% endif %}>
     {{ form.hidden_tag() if form.hidden_tag }}
     {% if caller %}
@@ -50,7 +50,7 @@
       <center><div id="progress"></div></center>
       <div class="buttons">
         <button type="submit" class="btn btn-primary" name="{{id}}">{{symbol('ok-sign', "submit")}} Verwerken</button>
-        {% if model %}
+        {% if model and allow_delete %}
           <a class='btn btn-danger' onclick='delete_item()'>{{symbol("remove")}} Verwijderen</a>
         {% endif %}
         {% for b in buttons %}{{button(*b)}}{% endfor %}
@@ -61,7 +61,7 @@
         $('div#progress').html('<progress></progress>');
         })
         })
-        {% if model %}
+        {% if model and allow_delete %}
           function delete_item() {
           if( confirm('Deze {{model.__table__}} en alle onderliggende gegevens worden verwijderd.\nWeet u het zeker?' )) {
           $(location).attr('href', "{{ url_for('action', model=model.__table__, action='delete', id=model.id, next_page=after_delete) }}");
