@@ -21,12 +21,12 @@
     </tbody>
   </table>
   {% set type = "basic" if basic else "json" %}
+  <script>
+    $(document).ready(function() {
+    {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}})
+    });
+  </script>
   {% if api %}
-    <script>
-      $(document).ready(function() {
-      {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}})
-      });
-    </script>
     {% if allow_add and not readonly %}
       <a class="btn btn-primary" href="{{url_for(api, id=0, **kwargs)}}">{{symbol('plus')}} Voeg {{api}} toe</a>
     {% endif %}
