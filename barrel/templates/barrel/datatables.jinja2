@@ -24,7 +24,7 @@
   {% set type = "basic" if basic else "json" %}
   <script>
     $(document).ready(function() {
-      {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}}, {{table_options}}, {{'false' if readonly else 'true'}})
+      {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}}, {{table_options}}, {{'true' if readonly else 'false'}})
     });
   </script>
   {% if api %}
