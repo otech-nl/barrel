@@ -6,7 +6,7 @@
   {% set basic = rows is iterable and rows is not string %}
   {% set columns = ['id'] + columns %}
   {% set title = title or api %}
-  {% set table_options = table_options | tojson if table_options else None %}
+  {% set table_options = table_options | tojson if table_options else "undefined" %}
   <h2>{{title | capitalize}}-overzicht</h2>
   {{intro}}
   <table id="{{title}}" class="display table table-striped" cellspacing="0" width="100%">
@@ -24,7 +24,7 @@
   {% set type = "basic" if basic else "json" %}
   <script>
     $(document).ready(function() {
-    {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}}, {{table_options}})
+      {{type}}_datatable("{{title}}", "{{api}}", {{columns | tojson}}, {{table_options}}, {{'false' if readonly else 'true'}})
     });
   </script>
   {% if api %}
